@@ -1,5 +1,7 @@
+#include <QColor>
 #include <QProcess>
 #include <QTextStream>
+#include <QUrl>
 
 #include "urlsmodel.hpp"
 
@@ -7,6 +9,7 @@
 //-----------------------------------------------------------------------------
 UrlsModel::UrlsModel(QObject *parent)
     : AbstractModel{parent} {
+    addColumn("Filename");
     addColumn("URL");
     addColumn("Status");
 }
@@ -18,26 +21,54 @@ QVariant UrlsModel::displayData(const QModelIndex &index) const {
     }
 
     switch(index.column()) {
-    case 0: return m_items[index.row()].link.c_str();
-    case 1: return m_items[index.row()].status;
+    case 0: return m_items[index.row()].filename.c_str();
+    case 1: return m_items[index.row()].link.c_str();
+    case 2: return m_items[index.row()].status;
     }
 
     return QVariant{};
 }
 
 //-----------------------------------------------------------------------------
+QVariant UrlsModel::foregroundColor(const QModelIndex &index) const {
+    if(static_cast<int>(m_items.size()) <= index.row()) {
+        return QVariant{};
+    }
+
+    return (
+        m_duplicates.count(m_items[index.row()].filename)
+        ? QColor(255,0,0)
+        : QColor(0,0,0)
+    );
+}
+
+//-----------------------------------------------------------------------------
 bool UrlsModel::loadFile(const QString &filename) {
-    QFile file(filename);
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+    QFile urlsFile(filename);
+    if (!urlsFile.open(QIODevice::ReadOnly | QIODevice::Text))
         return false;
 
     beginResetModel();
-    m_items.clear();
+    clearModel();
 
-    QTextStream in(&file);
+    std::unordered_set<std::string> filenames;
+
+    QTextStream in(&urlsFile);
     while (!in.atEnd()) {
         QString line = in.readLine();
-        m_items.push_back({line.toStdString(), false});
+        QUrl url{line};
+
+        auto filename = url.fileName().toStdString();
+
+        m_items.push_back(
+            {filename, line.toStdString(), false}
+        );
+
+        if(filenames.count(filename)) {
+            m_duplicates.insert(filename);
+        } else {
+            filenames.insert(filename);
+        }
     }
     endResetModel();
 
