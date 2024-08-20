@@ -30,8 +30,8 @@ public:
     QVariant foregroundColor(const QModelIndex&) const override;
 
 public:
+    bool downloadFiles(const QString&);
     bool loadFile(const QString&);
-    bool uploadFiles(const QString&);
 
 public:
     int rowCount(const QModelIndex &parent = QModelIndex()) const override {

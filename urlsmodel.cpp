@@ -43,6 +43,24 @@ QVariant UrlsModel::foregroundColor(const QModelIndex &index) const {
 }
 
 //-----------------------------------------------------------------------------
+bool UrlsModel::downloadFiles(const QString &dir) {
+    QDir workDir{dir};
+    QFile tmpFile(workDir.filePath("imgs.url"));
+    tmpFile.open(QIODevice::WriteOnly);
+
+    saveUrls(tmpFile);
+
+    QString filepath = tmpFile.fileName();
+    tmpFile.close();
+
+    createProcess(workDir, filepath);
+    m_process->start();
+    emit started();
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
 bool UrlsModel::loadFile(const QString &filename) {
     QFile urlsFile(filename);
     if (!urlsFile.open(QIODevice::ReadOnly | QIODevice::Text))
@@ -71,24 +89,6 @@ bool UrlsModel::loadFile(const QString &filename) {
         }
     }
     endResetModel();
-
-    return true;
-}
-
-//-----------------------------------------------------------------------------
-bool UrlsModel::uploadFiles(const QString &dir) {
-    QDir workDir{dir};
-    QFile tmpFile(workDir.filePath("imgs.url"));
-    tmpFile.open(QIODevice::WriteOnly);
-
-    saveUrls(tmpFile);
-
-    QString filepath = tmpFile.fileName();
-    tmpFile.close();
-
-    createProcess(workDir, filepath);
-    m_process->start();
-    emit started();
 
     return true;
 }
