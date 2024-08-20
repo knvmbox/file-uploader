@@ -1,8 +1,11 @@
+#include <filesystem>
+
 #include <QColor>
 #include <QProcess>
 #include <QTextStream>
 #include <QUrl>
 
+#include "utils/string_format.hpp"
 #include "urlsmodel.hpp"
 
 
@@ -27,19 +30,6 @@ QVariant UrlsModel::displayData(const QModelIndex &index) const {
     }
 
     return QVariant{};
-}
-
-//-----------------------------------------------------------------------------
-QVariant UrlsModel::foregroundColor(const QModelIndex &index) const {
-    if(static_cast<int>(m_items.size()) <= index.row()) {
-        return QVariant{};
-    }
-
-    return (
-        m_duplicates.count(m_items[index.row()].filename)
-        ? QColor(255,0,0)
-        : QColor(0,0,0)
-    );
 }
 
 //-----------------------------------------------------------------------------
@@ -69,7 +59,7 @@ bool UrlsModel::loadFile(const QString &filename) {
     beginResetModel();
     clearModel();
 
-    std::unordered_set<std::string> filenames;
+    std::unordered_set<std::string> filenamesSet;
 
     QTextStream in(&urlsFile);
     while (!in.atEnd()) {
@@ -78,15 +68,14 @@ bool UrlsModel::loadFile(const QString &filename) {
 
         auto filename = url.fileName().toStdString();
 
+        if(filenamesSet.count(filename)) {
+            filename = uniqueFilename(filenamesSet, filename);
+        }
+
         m_items.push_back(
             {filename, line.toStdString(), false}
         );
-
-        if(filenames.count(filename)) {
-            m_duplicates.insert(filename);
-        } else {
-            filenames.insert(filename);
-        }
+        filenamesSet.insert(filename);
     }
     endResetModel();
 
@@ -123,5 +112,27 @@ void UrlsModel::saveUrls(QFile &file) {
 
     for(const auto& item : m_items) {
         stream <<item.link.c_str() <<'\n';
+    }
+}
+
+//-----------------------------------------------------------------------------
+std::string UrlsModel::uniqueFilename(
+    const std::unordered_set<std::string> &filenamesSet,
+    const std::string &filename
+) {
+    using cdba::sec21::format;
+
+    if(!filenamesSet.count(filename)) {
+        return filename;
+    }
+
+    std::filesystem::path path{filename};
+
+    for(size_t ii = 1; ;++ii) {
+        auto newFilename = format("%1_(%2)%3")
+            .arg(path.stem().string()).arg(ii).arg(path.extension().string());
+        if(!filenamesSet.count(newFilename)) {
+            return newFilename;
+        }
     }
 }

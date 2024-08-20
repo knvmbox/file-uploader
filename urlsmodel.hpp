@@ -27,7 +27,6 @@ public:
     explicit UrlsModel(QObject *parent = nullptr);
 
     QVariant displayData(const QModelIndex &index) const override;
-    QVariant foregroundColor(const QModelIndex&) const override;
 
 public:
     bool downloadFiles(const QString&);
@@ -45,17 +44,16 @@ signals:
 private:
     void clearModel() {
         m_items.clear();
-        m_duplicates.clear();
     }
 
 private:
     void createProcess(const QDir&, const QString&);
     void saveUrls(QFile &);
+    std::string uniqueFilename(const std::unordered_set<std::string>&, const std::string&);
 
 private:
     std::vector<Item> m_items;
     std::unique_ptr<QProcess> m_process;
-    std::unordered_set<std::string> m_duplicates;
 };
 
 #endif // URLSMODEL_HPP
