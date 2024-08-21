@@ -10,6 +10,7 @@
 #include <QThreadPool>
 #include <QUrl>
 
+#include "../utils/curldownloader.hpp"
 #include "../utils/string_format.hpp"
 #include "urlsmodel.hpp"
 
@@ -128,8 +129,15 @@ void UrlsModel::updateTaskStatus() {
 }
 
 //-----------------------------------------------------------------------------
-void UrlsModel::downloadTask(const QString &dir, iterator begin, iterator end) {
+void UrlsModel::downloadTask(const QString &path, iterator begin, iterator end) {
     while(begin != end) {
+        QDir dir{path};
+        QString filename = dir.filePath(begin->filename.c_str());
+
+        CurlDownloader downloader(begin->link);
+        downloader.download();
+        downloader.save(filename.toStdString());
+
         emit itemComplete(begin, true);
         std::advance(begin, 1);
     }
@@ -161,6 +169,7 @@ bool UrlsModel::startDownload(const QString &dir) {
         });
     }
 
+    emit started();
     return true;
 }
 

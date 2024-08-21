@@ -28,6 +28,7 @@ set(PROJECT_HEADERS
     model/urlsmodel.hpp
     widgets/fileselector.hpp
     mainwindow.hpp
+    utils/curldownloader.hpp
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
@@ -54,7 +55,24 @@ else()
     endif()
 endif()
 
-target_link_libraries(file-uploader PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
+set(requiredlibs)
+
+find_package(CURL)
+if(CURL_FOUND)
+    target_include_directories(
+        ${PROJECT_NAME} PRIVATE
+        ${CURL_INCLUDE_DIR}
+    )
+    set(requiredlibs ${requiredlibs} ${CURL_LIBRARIES} )
+else(CURL_FOUND)
+  message(FATAL_ERROR "Could not find the CURL library and development files.")
+endif()
+
+target_link_libraries(
+    file-uploader PRIVATE
+    Qt${QT_VERSION_MAJOR}::Widgets
+    ${requiredlibs}
+)
 
 set_target_properties(file-uploader PROPERTIES
     MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com
