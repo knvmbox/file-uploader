@@ -1,8 +1,13 @@
 #include <filesystem>
+#include <iterator>
+
+#include <QDebug>
 
 #include <QColor>
 #include <QProcess>
 #include <QTextStream>
+#include <QThread>
+#include <QThreadPool>
 #include <QUrl>
 
 #include "../utils/string_format.hpp"
@@ -10,11 +15,18 @@
 
 
 //-----------------------------------------------------------------------------
-UrlsModel::UrlsModel(QObject *parent)
-    : AbstractModel{parent} {
+UrlsModel::UrlsModel(QObject *parent) :
+    AbstractModel{parent},
+    m_completedTasks{0},
+    m_maxThreads{static_cast<size_t>(QThread::idealThreadCount())} {
     addColumn("Filename");
-    addColumn("URL");
+    addColumn("Download URL");
     addColumn("Status");
+
+    qRegisterMetaType<iterator>();
+
+    connect(this, &UrlsModel::itemComplete, this, &UrlsModel::updateItemStatus);
+    connect(this, &UrlsModel::taskComplete, this, &UrlsModel::updateTaskStatus);
 }
 
 //-----------------------------------------------------------------------------
@@ -35,19 +47,31 @@ QVariant UrlsModel::displayData(const QModelIndex &index) const {
 //-----------------------------------------------------------------------------
 bool UrlsModel::downloadImages(const QString &dir) {
     QDir workDir{dir};
-    QFile tmpFile(workDir.filePath("imgs.url"));
-    tmpFile.open(QIODevice::WriteOnly);
 
-    saveUrls(tmpFile);
+    bool isExist = workDir.exists();
+    bool isEmpty = workDir.entryList(QDir::NoDotAndDotDot).isEmpty();
+    if(!isExist || !isEmpty) {
+        return false;
+    }
 
-    QString filepath = tmpFile.fileName();
-    tmpFile.close();
+    return startDownload(dir);
 
-    createProcess(workDir, filepath);
-    m_process->start();
-    emit started();
+//    QFile tmpFile(workDir.filePath("imgs.url"));
+//    bool res = tmpFile.open(QIODevice::WriteOnly);
+//    if(!res) {
+//        return false;
+//    }
 
-    return true;
+//    saveUrls(tmpFile);
+
+//    QString filepath = tmpFile.fileName();
+//    tmpFile.close();
+
+//    createProcess(workDir, filepath);
+//    m_process->start();
+//    emit started();
+
+//    return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -78,6 +102,64 @@ bool UrlsModel::openUrlsFile(const QString &filename) {
         filenamesSet.insert(filename);
     }
     endResetModel();
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+void UrlsModel::updateItemStatus(iterator it, bool status) {
+    int row = std::distance(m_items.begin(), it);
+    it->status = status;
+
+    emit dataChanged(index(row, 0), index(row, columnCount({})));
+}
+
+//-----------------------------------------------------------------------------
+void UrlsModel::updateTaskStatus() {
+    ++m_completedTasks;
+    if(m_completedTasks == m_maxThreads) {
+        emit complete(
+            std::all_of(m_items.begin(), m_items.end(), [](const auto &item){
+                return item.status;
+            })
+        );
+        m_completedTasks = 0;
+    }
+}
+
+//-----------------------------------------------------------------------------
+void UrlsModel::downloadTask(const QString &dir, iterator begin, iterator end) {
+    while(begin != end) {
+        emit itemComplete(begin, true);
+        std::advance(begin, 1);
+    }
+
+    emit taskComplete();
+}
+
+//-----------------------------------------------------------------------------
+bool UrlsModel::startDownload(const QString &dir) {
+    auto pool = QThreadPool::globalInstance();
+
+    m_completedTasks = 0;
+
+    if((m_items.size() < m_maxThreads) || (m_maxThreads == 1)) {
+        pool->start([this, dir](){
+            downloadTask(dir, m_items.begin(), m_items.end());
+        });
+    } else {
+        size_t count = m_items.size()/m_maxThreads;
+        iterator cur = m_items.begin();
+        for(int ii = 0; ii < (m_maxThreads - 1); ++ii) {
+            pool->start([this, dir, cur, count]() {
+                downloadTask(dir, cur, std::next(cur, count));
+            });
+            std::advance(cur, count);
+        }
+        pool->start([this, dir, cur](){
+            downloadTask(dir, cur, m_items.end());
+        });
+    }
 
     return true;
 }

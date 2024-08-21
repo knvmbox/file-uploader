@@ -12,16 +12,17 @@
 
 #include "abstractmodel.hpp"
 
+struct Item {
+    std::string filename;
+    std::string link;
+    bool status;
+};
+
+using iterator = std::vector<Item>::iterator;
 
 class UrlsModel : public AbstractModel
 {
     Q_OBJECT
-public:
-    struct Item {
-        std::string filename;
-        std::string link;
-        bool status;
-    };
 
 public:
     explicit UrlsModel(QObject *parent = nullptr);
@@ -37,9 +38,15 @@ public:
         return static_cast<int>(m_items.size());
     }
 
+private slots:
+    void updateItemStatus(iterator, bool);
+    void updateTaskStatus();
+
 signals:
     void complete(bool);
+    void itemComplete(iterator, bool);
     void started();
+    void taskComplete();
 
 private:
     void clearModel() {
@@ -47,6 +54,9 @@ private:
     }
 
 private:
+    void downloadTask(const QString&, iterator, iterator);
+    bool startDownload(const QString&);
+
     void createProcess(const QDir&, const QString&);
     void saveUrls(QFile &);
     std::string uniqueFilename(const std::unordered_set<std::string>&, const std::string&);
@@ -54,6 +64,11 @@ private:
 private:
     std::vector<Item> m_items;
     std::unique_ptr<QProcess> m_process;
+
+    size_t m_completedTasks;
+    size_t m_maxThreads;
 };
+
+Q_DECLARE_METATYPE(iterator)
 
 #endif // URLSMODEL_HPP
