@@ -21,16 +21,18 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(m_urlsModel.get(), SIGNAL(complete(bool)), this, SLOT(downloadComplete(bool)));
     connect(m_urlsModel.get(), SIGNAL(started()), this, SLOT(downloadStarted()));
-
-    ui->imgDirSelector->setMode(FileSelector::OpenDir);
-
-    connect(ui->imgDirSelector, SIGNAL(fileSelected(const QString&)), this, SLOT(loadImages()));
 }
 
 //-----------------------------------------------------------------------------
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+//-----------------------------------------------------------------------------
+void MainWindow::error(const QString &str) {
+    QString text = QString("[ERROR] %1").arg(str);
+    ui->loggerEdit->appendPlainText(text);
 }
 
 //-----------------------------------------------------------------------------
@@ -45,7 +47,7 @@ void MainWindow::downloadComplete(bool status) {
     if(status) {
         ui->loggerEdit->appendPlainText("Загрузка изображений успешно завершена");
     } else {
-        ui->loggerEdit->appendPlainText("Не удалось загрузить файлы");
+        error("Не удалось загрузить файлы");
     }
 
     lockUi(false);
@@ -53,7 +55,10 @@ void MainWindow::downloadComplete(bool status) {
 
 //-----------------------------------------------------------------------------
 void MainWindow::downloadFiles() {
-    m_urlsModel->downloadFiles(ui->dirSelector->filename());
+    bool res = m_urlsModel->downloadImages(ui->dirSelector->filename());
+    if(!res) {
+        error("Ошибка при запуске загрузки файлов");
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -69,7 +74,7 @@ void MainWindow::openUrls() {
         "Text files (*.txt);;All files (*.*)"
     );
 
-    m_urlsModel->loadFile(filename);
+    m_urlsModel->openUrlsFile(filename);
 }
 
 //-----------------------------------------------------------------------------

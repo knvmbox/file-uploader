@@ -21,6 +21,7 @@ public:
     ~MainWindow();
 
 private:
+    void error(const QString&);
     void lockUi(bool);
 
 private slots:

@@ -33,7 +33,7 @@ QVariant UrlsModel::displayData(const QModelIndex &index) const {
 }
 
 //-----------------------------------------------------------------------------
-bool UrlsModel::downloadFiles(const QString &dir) {
+bool UrlsModel::downloadImages(const QString &dir) {
     QDir workDir{dir};
     QFile tmpFile(workDir.filePath("imgs.url"));
     tmpFile.open(QIODevice::WriteOnly);
@@ -51,7 +51,7 @@ bool UrlsModel::downloadFiles(const QString &dir) {
 }
 
 //-----------------------------------------------------------------------------
-bool UrlsModel::loadFile(const QString &filename) {
+bool UrlsModel::openUrlsFile(const QString &filename) {
     QFile urlsFile(filename);
     if (!urlsFile.open(QIODevice::ReadOnly | QIODevice::Text))
         return false;

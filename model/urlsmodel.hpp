@@ -29,8 +29,8 @@ public:
     QVariant displayData(const QModelIndex &index) const override;
 
 public:
-    bool downloadFiles(const QString&);
-    bool loadFile(const QString&);
+    bool downloadImages(const QString&);
+    bool openUrlsFile(const QString&);
 
 public:
     int rowCount(const QModelIndex &parent = QModelIndex()) const override {
