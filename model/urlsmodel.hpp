@@ -10,7 +10,7 @@
 #include <QFile>
 #include <QProcess>
 
-#include "model/abstractmodel.hpp"
+#include "abstractmodel.hpp"
 
 
 class UrlsModel : public AbstractModel

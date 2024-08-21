@@ -8,18 +8,23 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
-    , m_model{new UrlsModel}
+    , m_urlsModel{new UrlsModel}
 {
     ui->setupUi(this);
+
     ui->dirSelector->setMode(FileSelector::OpenDir);
-    ui->urlsView->setModel(m_model.get());
+    ui->urlsView->setModel(m_urlsModel.get());
 
     connect(ui->dirSelector, SIGNAL(fileSelected(const QString&)), this, SLOT(updateState()));
     connect(ui->openUrlsAction, SIGNAL(triggered(bool)), this, SLOT(openUrls()));
-    connect(ui->downloadBtn, SIGNAL(clicked(bool)), this, SLOT(uploadFiles()));
+    connect(ui->downloadBtn, SIGNAL(clicked(bool)), this, SLOT(downloadFiles()));
 
-    connect(m_model.get(), SIGNAL(complete(bool)), this, SLOT(downloadComplete(bool)));
-    connect(m_model.get(), SIGNAL(started()), this, SLOT(downloadStarted()));
+    connect(m_urlsModel.get(), SIGNAL(complete(bool)), this, SLOT(downloadComplete(bool)));
+    connect(m_urlsModel.get(), SIGNAL(started()), this, SLOT(downloadStarted()));
+
+    ui->imgDirSelector->setMode(FileSelector::OpenDir);
+
+    connect(ui->imgDirSelector, SIGNAL(fileSelected(const QString&)), this, SLOT(loadImages()));
 }
 
 //-----------------------------------------------------------------------------
@@ -47,6 +52,11 @@ void MainWindow::downloadComplete(bool status) {
 }
 
 //-----------------------------------------------------------------------------
+void MainWindow::downloadFiles() {
+    m_urlsModel->downloadFiles(ui->dirSelector->filename());
+}
+
+//-----------------------------------------------------------------------------
 void MainWindow::downloadStarted() {
     ui->loggerEdit->appendPlainText("Загрузка изображений запущена");
     lockUi(true);
@@ -59,16 +69,12 @@ void MainWindow::openUrls() {
         "Text files (*.txt);;All files (*.*)"
     );
 
-    m_model->loadFile(filename);
+    m_urlsModel->loadFile(filename);
 }
 
 //-----------------------------------------------------------------------------
 void MainWindow::updateState() {
-    bool state = (m_model->rowCount() == 0) || ui->dirSelector->filename().isEmpty();
+    bool state = (m_urlsModel->rowCount() == 0) || ui->dirSelector->filename().isEmpty();
     ui->downloadBtn->setDisabled(state);
 }
 
-//-----------------------------------------------------------------------------
-void MainWindow::uploadFiles() {
-    m_model->uploadFiles(ui->dirSelector->filename());
-}

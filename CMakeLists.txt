@@ -16,18 +16,18 @@ find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets REQUIRED)
 
 set(PROJECT_SOURCES
     model/abstractmodel.cpp
+    model/urlsmodel.cpp
     widgets/fileselector.cpp
     main.cpp
     mainwindow.cpp
     mainwindow.ui
-    urlsmodel.cpp
 )
 
 set(PROJECT_HEADERS
     model/abstractmodel.hpp
+    model/urlsmodel.hpp
     widgets/fileselector.hpp
     mainwindow.hpp
-    urlsmodel.hpp
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

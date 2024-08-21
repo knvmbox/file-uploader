@@ -5,7 +5,7 @@
 
 #include <QMainWindow>
 
-#include "urlsmodel.hpp"
+#include "model/urlsmodel.hpp"
 
 
 QT_BEGIN_NAMESPACE
@@ -25,14 +25,14 @@ private:
 
 private slots:
     void downloadComplete(bool);
+    void downloadFiles();
     void downloadStarted();
     void openUrls();
     void updateState();
-    void uploadFiles();
 
 private:
     Ui::MainWindow *ui;
 
-    std::unique_ptr<UrlsModel> m_model;
+    std::unique_ptr<UrlsModel> m_urlsModel;
 };
 #endif // MAINWINDOW_HPP

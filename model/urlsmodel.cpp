@@ -5,7 +5,7 @@
 #include <QTextStream>
 #include <QUrl>
 
-#include "utils/string_format.hpp"
+#include "../utils/string_format.hpp"
 #include "urlsmodel.hpp"
 
 
