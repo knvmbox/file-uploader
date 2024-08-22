@@ -1,6 +1,7 @@
 #ifndef CURLDOWNLOADER_HPP
 #define CURLDOWNLOADER_HPP
 
+#include <algorithm>
 #include <fstream>
 #include <memory>
 #include <stdexcept>
@@ -34,10 +35,8 @@ public:
     }
 
 public:
-    CurlDownloader(std::string url) :
-        m_curl{curl_easy_init(), curl_easy_cleanup},
-        m_url{std::move(url)} {
-        curl_easy_setopt(m_curl.get(), CURLOPT_URL, m_url.c_str());
+    CurlDownloader() :
+        m_curl{curl_easy_init(), curl_easy_cleanup} {
         curl_easy_setopt(m_curl.get(), CURLOPT_WRITEFUNCTION, writeFunc);
         curl_easy_setopt(m_curl.get(), CURLOPT_WRITEDATA, this);
     }
@@ -46,8 +45,10 @@ public:
         return m_dataBuf.data();
     }
 
-    void download() {
+    void download(std::string url) {
         m_dataBuf.clear();
+
+        curl_easy_setopt(m_curl.get(), CURLOPT_URL, url.c_str());
 
         auto res = curl_easy_perform(m_curl.get());
         if(res != CURLE_OK) {
@@ -82,7 +83,6 @@ private:
 
 private:
     curl_t m_curl;
-    std::string m_url;
     std::vector<char> m_dataBuf;
 };
 

@@ -50,7 +50,7 @@ bool UrlsModel::downloadImages(const QString &dir) {
     QDir workDir{dir};
 
     bool isExist = workDir.exists();
-    bool isEmpty = workDir.entryList(QDir::NoDotAndDotDot).isEmpty();
+    bool isEmpty = workDir.entryList(QDir::NoDotAndDotDot | QDir::Files).isEmpty();
     if(!isExist || !isEmpty) {
         return false;
     }
@@ -130,12 +130,13 @@ void UrlsModel::updateTaskStatus() {
 
 //-----------------------------------------------------------------------------
 void UrlsModel::downloadTask(const QString &path, iterator begin, iterator end) {
+    CurlDownloader downloader;
+
     while(begin != end) {
         QDir dir{path};
         QString filename = dir.filePath(begin->filename.c_str());
 
-        CurlDownloader downloader(begin->link);
-        downloader.download();
+        downloader.download(begin->link);
         downloader.save(filename.toStdString());
 
         emit itemComplete(begin, true);
