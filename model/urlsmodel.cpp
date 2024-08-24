@@ -55,23 +55,6 @@ bool UrlsModel::downloadImages(const QString &dir) {
     }
 
     return startDownload(dir);
-
-//    QFile tmpFile(workDir.filePath("imgs.url"));
-//    bool res = tmpFile.open(QIODevice::WriteOnly);
-//    if(!res) {
-//        return false;
-//    }
-
-//    saveUrls(tmpFile);
-
-//    QString filepath = tmpFile.fileName();
-//    tmpFile.close();
-
-//    createProcess(workDir, filepath);
-//    m_process->start();
-//    emit started();
-
-//    return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -118,7 +101,7 @@ void UrlsModel::updateItemStatus(iterator it, bool status) {
 void UrlsModel::updateTaskStatus() {
     ++m_completedTasks;
     if(m_completedTasks == m_maxThreads) {
-        emit complete(
+        emit downloadComplete(
             std::all_of(m_items.begin(), m_items.end(), [](const auto &item){
                 return item.status;
             })
@@ -169,40 +152,8 @@ bool UrlsModel::startDownload(const QString &dir) {
         });
     }
 
-    emit started();
+    emit downloadStart();
     return true;
-}
-
-//-----------------------------------------------------------------------------
-void UrlsModel::createProcess(const QDir &dir, const QString &filename) {
-    QStringList args;
-    args <<"-i" <<filename;
-
-    m_process.reset(new QProcess);
-    m_process->setProgram("wget");
-    m_process->setWorkingDirectory(dir.path());
-    m_process->setArguments(args);
-    m_process->setReadChannel(QProcess::StandardError);
-
-    connect(
-        m_process.get(),
-        QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
-        [=](int exitCode, QProcess::ExitStatus exitStatus) {
-            emit complete(exitStatus == QProcess::NormalExit);
-            m_process.reset();
-
-            QFile tmpFile(dir.filePath(filename));
-            tmpFile.remove();
-    });
-}
-
-//-----------------------------------------------------------------------------
-void UrlsModel::saveUrls(QFile &file) {
-    QTextStream stream{&file};
-
-    for(const auto& item : m_items) {
-        stream <<item.link.c_str() <<'\n';
-    }
 }
 
 //-----------------------------------------------------------------------------

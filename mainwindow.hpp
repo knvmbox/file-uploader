@@ -25,7 +25,7 @@ private:
     void lockUi(bool);
 
 private slots:
-    void downloadComplete(bool);
+    void downloadCompleted(bool);
     void downloadFiles();
     void downloadStarted();
     void openUrls();

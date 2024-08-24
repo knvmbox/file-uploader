@@ -19,8 +19,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->openUrlsAction, SIGNAL(triggered(bool)), this, SLOT(openUrls()));
     connect(ui->downloadBtn, SIGNAL(clicked(bool)), this, SLOT(downloadFiles()));
 
-    connect(m_urlsModel.get(), SIGNAL(complete(bool)), this, SLOT(downloadComplete(bool)));
-    connect(m_urlsModel.get(), SIGNAL(started()), this, SLOT(downloadStarted()));
+    connect(m_urlsModel.get(), SIGNAL(downloadComplete(bool)), this, SLOT(downloadCompleted(bool)));
+    connect(m_urlsModel.get(), SIGNAL(downloadStart()), this, SLOT(downloadStarted()));
 }
 
 //-----------------------------------------------------------------------------
@@ -43,7 +43,7 @@ void MainWindow::lockUi(bool state) {
 }
 
 //-----------------------------------------------------------------------------
-void MainWindow::downloadComplete(bool status) {
+void MainWindow::downloadCompleted(bool status) {
     if(status) {
         ui->loggerEdit->appendPlainText("Загрузка изображений успешно завершена");
     } else {

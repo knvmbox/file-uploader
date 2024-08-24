@@ -43,9 +43,9 @@ private slots:
     void updateTaskStatus();
 
 signals:
-    void complete(bool);
+    void downloadComplete(bool);
+    void downloadStart();
     void itemComplete(iterator, bool);
-    void started();
     void taskComplete();
 
 private:
@@ -57,8 +57,6 @@ private:
     void downloadTask(const QString&, iterator, iterator);
     bool startDownload(const QString&);
 
-    void createProcess(const QDir&, const QString&);
-    void saveUrls(QFile &);
     std::string uniqueFilename(const std::unordered_set<std::string>&, const std::string&);
 
 private:
