@@ -68,8 +68,14 @@ else(CURL_FOUND)
   message(FATAL_ERROR "Could not find the CURL library and development files.")
 endif()
 
+
+target_include_directories(
+    ${PROJECT_NAME} PRIVATE
+    ext-lib
+)
+
 target_link_libraries(
-    file-uploader PRIVATE
+    ${PROJECT_NAME} PRIVATE
     Qt${QT_VERSION_MAJOR}::Widgets
     ${requiredlibs}
 )

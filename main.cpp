@@ -1,19 +1,19 @@
 #include <QApplication>
 
 #include "mainwindow.hpp"
-#include "utils/curldownloader.hpp"
+#include "utils/curlutils.hpp"
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     MainWindow w;
 
-    CurlDownloader::curlInit();
+    curl::curlInit();
 
     w.show();
     auto res = a.exec();
 
-    CurlDownloader::curlCleanup();
+    curl::curlCleanup();
 
     return res;
 }

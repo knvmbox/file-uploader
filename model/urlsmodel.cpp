@@ -10,8 +10,7 @@
 #include <QThreadPool>
 #include <QUrl>
 
-#include "../utils/curldownloader.hpp"
-#include "../utils/string_format.hpp"
+#include "../utils/curlutils.hpp"
 #include "urlsmodel.hpp"
 
 
@@ -130,7 +129,7 @@ void UrlsModel::updateTaskStatus() {
 
 //-----------------------------------------------------------------------------
 void UrlsModel::downloadTask(const QString &path, iterator begin, iterator end) {
-    CurlDownloader downloader;
+    curl::CurlDownloader downloader;
 
     while(begin != end) {
         QDir dir{path};
@@ -195,7 +194,6 @@ void UrlsModel::createProcess(const QDir &dir, const QString &filename) {
             QFile tmpFile(dir.filePath(filename));
             tmpFile.remove();
     });
-
 }
 
 //-----------------------------------------------------------------------------
@@ -212,8 +210,6 @@ std::string UrlsModel::uniqueFilename(
     const std::unordered_set<std::string> &filenamesSet,
     const std::string &filename
 ) {
-    using cdba::sec21::format;
-
     if(!filenamesSet.count(filename)) {
         return filename;
     }
@@ -221,10 +217,12 @@ std::string UrlsModel::uniqueFilename(
     std::filesystem::path path{filename};
 
     for(size_t ii = 1; ;++ii) {
-        auto newFilename = format("%1_(%2)%3")
-            .arg(path.stem().string()).arg(ii).arg(path.extension().string());
-        if(!filenamesSet.count(newFilename)) {
-            return newFilename;
+        auto newFilename = QString("%1_(%2)%3")
+            .arg(path.stem().string().c_str())
+            .arg(ii)
+            .arg(path.extension().string().c_str());
+        if(!filenamesSet.count(newFilename.toStdString())) {
+            return newFilename.toStdString();
         }
     }
 }
