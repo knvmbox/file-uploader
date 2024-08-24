@@ -72,6 +72,9 @@
            </item>
            <item>
             <widget class="QPushButton" name="uploadBtn">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
              <property name="text">
               <string>Выгрузить</string>
              </property>

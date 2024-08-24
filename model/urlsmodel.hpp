@@ -1,6 +1,7 @@
 #ifndef URLSMODEL_HPP
 #define URLSMODEL_HPP
 
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <vector>
@@ -32,8 +33,14 @@ public:
 public:
     bool downloadImages(const QString&);
     bool openUrlsFile(const QString&);
+    bool uploadImages(const QString&);
 
 public:
+    bool canUpload() {
+        return std::all_of(m_items.begin(), m_items.end(), [](const auto &item){
+            return item.status;
+        });
+    }
     int rowCount(const QModelIndex &parent = QModelIndex()) const override {
         return static_cast<int>(m_items.size());
     }

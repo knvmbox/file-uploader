@@ -1,7 +1,8 @@
 #include <QFileDialog>
 
 #include "mainwindow.hpp"
-#include "./ui_mainwindow.h"
+#include "uploadimagesdlg.hpp"
+#include "ui_mainwindow.h"
 
 
 //-----------------------------------------------------------------------------
@@ -18,6 +19,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->dirSelector, SIGNAL(fileSelected(const QString&)), this, SLOT(updateState()));
     connect(ui->openUrlsAction, SIGNAL(triggered(bool)), this, SLOT(openUrls()));
     connect(ui->downloadBtn, SIGNAL(clicked(bool)), this, SLOT(downloadFiles()));
+    connect(ui->uploadBtn, SIGNAL(clicked(bool)), this, SLOT(uploadFiles()));
 
     connect(m_urlsModel.get(), SIGNAL(downloadComplete(bool)), this, SLOT(downloadCompleted(bool)));
     connect(m_urlsModel.get(), SIGNAL(downloadStart()), this, SLOT(downloadStarted()));
@@ -40,6 +42,7 @@ void MainWindow::lockUi(bool state) {
     ui->openUrlsAction->setDisabled(state);
     ui->downloadBtn->setDisabled(state);
     ui->dirSelector->setDisabled(state);
+    ui->uploadBtn->setDisabled(state);
 }
 
 //-----------------------------------------------------------------------------
@@ -75,11 +78,30 @@ void MainWindow::openUrls() {
     );
 
     m_urlsModel->openUrlsFile(filename);
+    updateState();
 }
 
 //-----------------------------------------------------------------------------
 void MainWindow::updateState() {
     bool state = (m_urlsModel->rowCount() == 0) || ui->dirSelector->filename().isEmpty();
     ui->downloadBtn->setDisabled(state);
+    ui->uploadBtn->setEnabled(m_urlsModel->canUpload());
 }
 
+//-----------------------------------------------------------------------------
+void MainWindow::uploadFiles() {
+    UploadImagesDlg dlg(this);
+
+    auto res = dlg.exec();
+    if(res == QDialog::Rejected) {
+        return;
+    }
+
+    auto album = dlg.album();
+    auto isUploaded = m_urlsModel->uploadImages(album.id.c_str());
+    if(isUploaded) {
+        ui->loggerEdit->appendPlainText("Выгрузка изображений успешно завершена");
+    } else {
+        error("Не удалось выгрузить файлы");
+    }
+}

@@ -90,6 +90,11 @@ bool UrlsModel::openUrlsFile(const QString &filename) {
 }
 
 //-----------------------------------------------------------------------------
+bool UrlsModel::uploadImages(const QString&) {
+    return false;
+}
+
+//-----------------------------------------------------------------------------
 void UrlsModel::updateItemStatus(iterator it, bool status) {
     int row = std::distance(m_items.begin(), it);
     it->status = status;

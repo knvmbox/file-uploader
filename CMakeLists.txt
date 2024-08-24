@@ -20,7 +20,10 @@ set(PROJECT_SOURCES
     widgets/fileselector.cpp
     main.cpp
     mainwindow.cpp
+    uploadimagesdlg.cpp
+
     mainwindow.ui
+    uploadimagesdlg.ui
 )
 
 set(PROJECT_HEADERS
@@ -28,6 +31,7 @@ set(PROJECT_HEADERS
     model/urlsmodel.hpp
     widgets/fileselector.hpp
     mainwindow.hpp
+    uploadimagesdlg.hpp
     utils/curldownloader.hpp
 )
 

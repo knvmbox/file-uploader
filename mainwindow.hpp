@@ -30,6 +30,7 @@ private slots:
     void downloadStarted();
     void openUrls();
     void updateState();
+    void uploadFiles();
 
 private:
     Ui::MainWindow *ui;
