@@ -10,6 +10,8 @@
 #include "curlutils.hpp"
 
 
+namespace imageban {
+
 ///////////////////////////////////////////////////////////////////////////////
 struct imageban_error : public std::runtime_error {
     imageban_error(const char *what) : std::runtime_error(what) {
@@ -20,22 +22,23 @@ struct imageban_error : public std::runtime_error {
 };
 
 ///////////////////////////////////////////////////////////////////////////////
+struct album_t {
+    std::string id;
+    std::string name;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+struct image_t {
+    std::string id;
+    std::string album_id;
+    std::string name;
+    std::string image_name;
+    std::string link;
+};
+
+///////////////////////////////////////////////////////////////////////////////
 class ImageBan {
     using json = nlohmann::json;
-
-public:
-    struct album_t {
-        std::string id;
-        std::string name;
-    };
-
-    struct image_t {
-        std::string id;
-        std::string album_id;
-        std::string name;
-        std::string image_name;
-        std::string link;
-    };
 
 public:
     ImageBan(std::string s) : m_secret{std::move(s)} {
@@ -148,5 +151,6 @@ private:
     std::string m_secret;
 };
 
+}
 
 #endif // IMAGEBAN_HPP

@@ -237,7 +237,7 @@ bool UrlsModel::startUpload(const QString &album) {
 
 //-----------------------------------------------------------------------------
 void UrlsModel::uploadTask(const QString &album, iterator begin, iterator end) {
-    ImageBan imageBan{"cvqx64FaleJ7dYclfNATYfWDWI2bQ0AqT2i"};
+    imageban::ImageBan imageBan{"cvqx64FaleJ7dYclfNATYfWDWI2bQ0AqT2i"};
 
     while(begin != end) {
         QString filename = m_workDir.filePath(begin->filename.c_str());

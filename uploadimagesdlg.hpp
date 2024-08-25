@@ -18,7 +18,7 @@ public:
     explicit UploadImagesDlg(QWidget *parent = nullptr);
     ~UploadImagesDlg();
 
-    ImageBan::album_t album();
+    imageban::album_t album();
 
 private:
     void addAlbum(const QString&);
@@ -28,7 +28,7 @@ private:
 
 private:
     Ui::UploadImagesDlg *ui;
-    ImageBan m_imageBan;
+    imageban::ImageBan m_imageBan;
 };
 
 #endif // UPLOADIMAGESDLG_HPP

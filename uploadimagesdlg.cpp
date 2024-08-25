@@ -38,7 +38,7 @@ UploadImagesDlg::~UploadImagesDlg() {
 }
 
 //-----------------------------------------------------------------------------
-ImageBan::album_t UploadImagesDlg::album() {
+imageban::album_t UploadImagesDlg::album() {
     return {
         ui->albumsBox->currentData().toString().toStdString(),
         ui->albumsBox->currentText().toStdString()
