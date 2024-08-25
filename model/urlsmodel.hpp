@@ -9,16 +9,26 @@
 
 #include <QDir>
 #include <QFile>
+#include <QIcon>
 #include <QProcess>
 
 #include "abstractmodel.hpp"
 
 
 ///////////////////////////////////////////////////////////////////////////////
+enum class ItemStatus {
+    NullStatus, DownloadedStatus, UploadedStatus
+};
+
+enum class ProcessType {
+    DownloadProcess, UploadProcess
+};
+
+///////////////////////////////////////////////////////////////////////////////
 struct Item {
     std::string filename;
     std::string link;
-    bool status;
+    ItemStatus status;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -31,8 +41,6 @@ class UrlsModel : public AbstractModel
 
 public:
     explicit UrlsModel(QObject *parent = nullptr);
-
-    QVariant displayData(const QModelIndex &index) const override;
 
 public:
     bool downloadImages(const QString&);
@@ -49,16 +57,19 @@ public:
         return static_cast<int>(m_items.size());
     }
 
+protected:
+    QVariant decorationData(const QModelIndex&) const override;
+    QVariant displayData(const QModelIndex &index) const override;
+
 private slots:
-    void updateItemStatus(iterator, bool);
-    void updateTaskStatus();
+    void updateItemStatus(iterator, ItemStatus);
+    void updateTaskStatus(ProcessType);
 
 signals:
-    void downloadComplete(bool);
-    void downloadStart();
-    void itemComplete(iterator, bool);
-    void taskComplete();
-    void uploadStart();
+    void itemComplete(iterator, ItemStatus);
+    void taskComplete(ProcessType);
+    void processComplete(ProcessType, bool);
+    void processStart(ProcessType);
 
 private:
     void clearModel() {
@@ -75,14 +86,18 @@ private:
 
 private:
     std::vector<Item> m_items;
-    std::unique_ptr<QProcess> m_process;
+    QDir m_workDir;
 
     size_t m_completedTasks;
     size_t m_maxThreads;
 
-    QDir m_workDir;
+    QIcon m_downIcon;
+    QIcon m_upDownIcon;
+    QIcon m_grayIcon;
 };
 
 Q_DECLARE_METATYPE(iterator)
+Q_DECLARE_METATYPE(ItemStatus)
+Q_DECLARE_METATYPE(ProcessType)
 
 #endif // URLSMODEL_HPP

@@ -31,6 +31,7 @@ QVariant AbstractModel::data(const QModelIndex &index, int role) const
     {
     case Qt::BackgroundRole: return backgroundColor(index);        
     case Qt::CheckStateRole: return checkStateData(index);
+    case Qt::DecorationRole: return decorationData(index);
     case Qt::DisplayRole: return displayData(index);
     case Qt::EditRole: return editData(index);
     case Qt::ForegroundRole: return foregroundColor(index);

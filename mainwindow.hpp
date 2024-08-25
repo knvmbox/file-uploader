@@ -25,10 +25,10 @@ private:
     void lockUi(bool);
 
 private slots:
-    void downloadCompleted(bool);
     void downloadFiles();
-    void downloadStarted();
     void openUrls();
+    void processCompleted(ProcessType,bool);
+    void processStarted(ProcessType);
     void updateState();
     void uploadFiles();
 

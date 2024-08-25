@@ -37,6 +37,8 @@ protected:
         {    return QVariant();   }
     virtual QVariant checkStateData(const QModelIndex&) const
         {    return QVariant();   }
+    virtual QVariant decorationData(const QModelIndex&) const
+        {    return QVariant();   }
     virtual QVariant editData(const QModelIndex&) const
         {    return QVariant();   }
     virtual QVariant foregroundColor(const QModelIndex&) const

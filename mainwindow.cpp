@@ -21,8 +21,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->downloadBtn, SIGNAL(clicked(bool)), this, SLOT(downloadFiles()));
     connect(ui->uploadBtn, SIGNAL(clicked(bool)), this, SLOT(uploadFiles()));
 
-    connect(m_urlsModel.get(), SIGNAL(downloadComplete(bool)), this, SLOT(downloadCompleted(bool)));
-    connect(m_urlsModel.get(), SIGNAL(downloadStart()), this, SLOT(downloadStarted()));
+    connect(m_urlsModel.get(), &UrlsModel::processComplete, this, &MainWindow::processCompleted);
+    connect(m_urlsModel.get(), &UrlsModel::processStart, this, &MainWindow::processStarted);
 }
 
 //-----------------------------------------------------------------------------
@@ -46,11 +46,21 @@ void MainWindow::lockUi(bool state) {
 }
 
 //-----------------------------------------------------------------------------
-void MainWindow::downloadCompleted(bool status) {
+void MainWindow::processCompleted(ProcessType type, bool status) {
     if(status) {
-        ui->loggerEdit->appendPlainText("Загрузка изображений успешно завершена");
+        auto text = (
+            (type == ProcessType::DownloadProcess)
+            ? "Загрузка изображений успешно завершена"
+            : "Выгрузка изображений успешно завершена"
+        );
+        ui->loggerEdit->appendPlainText(text);
     } else {
-        error("Не удалось загрузить файлы");
+        auto text = (
+            (type == ProcessType::DownloadProcess)
+            ? "Не удалось загрузить файлы"
+            : "Не удалось выгрузить файлы"
+        );
+        error(text);
     }
 
     lockUi(false);
@@ -65,12 +75,6 @@ void MainWindow::downloadFiles() {
 }
 
 //-----------------------------------------------------------------------------
-void MainWindow::downloadStarted() {
-    ui->loggerEdit->appendPlainText("Загрузка изображений запущена");
-    lockUi(true);
-}
-
-//-----------------------------------------------------------------------------
 void MainWindow::openUrls() {
     auto filename = QFileDialog::getOpenFileName(
         ui->centralwidget, windowTitle(), ".",
@@ -79,6 +83,18 @@ void MainWindow::openUrls() {
 
     m_urlsModel->openUrlsFile(filename);
     updateState();
+}
+
+//-----------------------------------------------------------------------------
+void MainWindow::processStarted(ProcessType type) {
+    QString text = (
+        (type == ProcessType::DownloadProcess)
+        ? "Загрузка изображений запущена"
+        : "Выгрузка изображений запущена"
+    );
+
+    ui->loggerEdit->appendPlainText(text);
+    lockUi(true);
 }
 
 //-----------------------------------------------------------------------------
@@ -99,9 +115,7 @@ void MainWindow::uploadFiles() {
 
     auto album = dlg.album();
     auto isUploaded = m_urlsModel->uploadImages(album.id.c_str());
-    if(isUploaded) {
-        ui->loggerEdit->appendPlainText("Выгрузка изображений успешно завершена");
-    } else {
-        error("Не удалось выгрузить файлы");
+    if(!isUploaded) {
+        error("Ошибка при запуске выгрузки файлов");
     }
 }

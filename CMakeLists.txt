@@ -24,6 +24,8 @@ set(PROJECT_SOURCES
 
     mainwindow.ui
     uploadimagesdlg.ui
+
+    file-uploader.qrc
 )
 
 set(PROJECT_HEADERS
