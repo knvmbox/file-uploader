@@ -3,5 +3,10 @@
         <file>img/up-and-down.png</file>
         <file>img/down.png</file>
         <file>img/gray-up-and-down.png</file>
+        <file>img/add.png</file>
+        <file>img/upload.png</file>
+        <file>img/update.png</file>
+        <file>img/download.png</file>
+        <file>img/open-folder.png</file>
     </qresource>
 </RCC>

@@ -68,6 +68,10 @@
              <property name="text">
               <string>Загрузить</string>
              </property>
+             <property name="icon">
+              <iconset resource="file-uploader.qrc">
+               <normaloff>:/img/download.png</normaloff>:/img/download.png</iconset>
+             </property>
             </widget>
            </item>
            <item>
@@ -77,6 +81,10 @@
              </property>
              <property name="text">
               <string>Выгрузить</string>
+             </property>
+             <property name="icon">
+              <iconset resource="file-uploader.qrc">
+               <normaloff>:/img/upload.png</normaloff>:/img/upload.png</iconset>
              </property>
             </widget>
            </item>
@@ -121,6 +129,10 @@
    <addaction name="openUrlsAction"/>
   </widget>
   <action name="openUrlsAction">
+   <property name="icon">
+    <iconset resource="file-uploader.qrc">
+     <normaloff>:/img/open-folder.png</normaloff>:/img/open-folder.png</iconset>
+   </property>
    <property name="text">
     <string>Открыть URLs</string>
    </property>
@@ -137,6 +149,8 @@
    <container>1</container>
   </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="file-uploader.qrc"/>
+ </resources>
  <connections/>
 </ui>
