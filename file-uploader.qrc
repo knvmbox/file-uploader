@@ -10,5 +10,6 @@
         <file>img/open-folder.png</file>
         <file>img/export-file.png</file>
         <file>img/import-file.png</file>
+        <file>img/app.png</file>
     </qresource>
 </RCC>
