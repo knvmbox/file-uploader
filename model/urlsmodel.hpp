@@ -47,12 +47,13 @@ public:
 public:
     bool downloadImages(const QString&);
     bool openUrlsFile(const QString&);
+    bool saveUrlsFile(const QString&);
     bool uploadImages(const QString&);
 
 public:
     bool canUpload() {
         return std::all_of(m_items.begin(), m_items.end(), [](const auto &item){
-            return item.status;
+            return (item.status != ItemStatus::NullStatus);
         });
     }
     int rowCount(const QModelIndex &parent = QModelIndex()) const override {

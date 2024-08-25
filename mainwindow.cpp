@@ -19,6 +19,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->dirSelector, SIGNAL(fileSelected(const QString&)), this, SLOT(updateState()));
     connect(ui->openUrlsAction, SIGNAL(triggered(bool)), this, SLOT(openUrls()));
     connect(ui->downloadBtn, SIGNAL(clicked(bool)), this, SLOT(downloadFiles()));
+    connect(ui->exportUrlsAction, SIGNAL(triggered(bool)), this, SLOT(saveUrls()));
     connect(ui->uploadBtn, SIGNAL(clicked(bool)), this, SLOT(uploadFiles()));
 
     connect(m_urlsModel.get(), &UrlsModel::processComplete, this, &MainWindow::processCompleted);
@@ -95,6 +96,16 @@ void MainWindow::processStarted(ProcessType type) {
 
     ui->loggerEdit->appendPlainText(text);
     lockUi(true);
+}
+
+//-----------------------------------------------------------------------------
+void MainWindow::saveUrls() {
+    auto filename = QFileDialog::getSaveFileName(
+        ui->centralwidget, windowTitle(), ".",
+        "Text files (*.txt);;All files (*.*)"
+    );
+
+    m_urlsModel->saveUrlsFile(filename);
 }
 
 //-----------------------------------------------------------------------------

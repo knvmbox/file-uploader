@@ -29,6 +29,7 @@ private slots:
     void openUrls();
     void processCompleted(ProcessType,bool);
     void processStarted(ProcessType);
+    void saveUrls();
     void updateState();
     void uploadFiles();
 

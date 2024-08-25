@@ -72,8 +72,10 @@ bool UrlsModel::openUrlsFile(const QString &filename) {
     QTextStream in(&urlsFile);
     while (!in.atEnd()) {
         QString line = in.readLine();
-        QUrl url{line};
+        if(line.isEmpty())
+            continue;
 
+        QUrl url{line};
         auto filename = url.fileName().toStdString();
 
         if(filenamesSet.count(filename)) {
@@ -86,6 +88,20 @@ bool UrlsModel::openUrlsFile(const QString &filename) {
         filenamesSet.insert(filename);
     }
     endResetModel();
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+bool UrlsModel::saveUrlsFile(const QString &filename) {
+    QFile urlsFile(filename);
+    if (!urlsFile.open(QIODevice::WriteOnly | QIODevice::Text))
+        return false;
+
+    QTextStream in(&urlsFile);
+    for(const auto &item : m_items) {
+        in <<item.upLink.c_str() <<"\n";
+    }
 
     return true;
 }
