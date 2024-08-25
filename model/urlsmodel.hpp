@@ -13,14 +13,18 @@
 
 #include "abstractmodel.hpp"
 
+
+///////////////////////////////////////////////////////////////////////////////
 struct Item {
     std::string filename;
     std::string link;
     bool status;
 };
 
+///////////////////////////////////////////////////////////////////////////////
 using iterator = std::vector<Item>::iterator;
 
+///////////////////////////////////////////////////////////////////////////////
 class UrlsModel : public AbstractModel
 {
     Q_OBJECT
@@ -54,6 +58,7 @@ signals:
     void downloadStart();
     void itemComplete(iterator, bool);
     void taskComplete();
+    void uploadStart();
 
 private:
     void clearModel() {
@@ -61,8 +66,10 @@ private:
     }
 
 private:
-    void downloadTask(const QString&, iterator, iterator);
-    bool startDownload(const QString&);
+    void downloadTask(iterator, iterator);
+    bool startDownload();
+    bool startUpload(const QString &album);
+    void uploadTask(const QString&, iterator, iterator);
 
     std::string uniqueFilename(const std::unordered_set<std::string>&, const std::string&);
 
@@ -72,6 +79,8 @@ private:
 
     size_t m_completedTasks;
     size_t m_maxThreads;
+
+    QDir m_workDir;
 };
 
 Q_DECLARE_METATYPE(iterator)

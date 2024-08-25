@@ -11,6 +11,7 @@
 #include <QUrl>
 
 #include "../utils/curlutils.hpp"
+#include "../utils/imageban.hpp"
 #include "urlsmodel.hpp"
 
 
@@ -54,7 +55,8 @@ bool UrlsModel::downloadImages(const QString &dir) {
         return false;
     }
 
-    return startDownload(dir);
+    m_workDir = std::move(workDir);
+    return startDownload();
 }
 
 //-----------------------------------------------------------------------------
@@ -90,8 +92,18 @@ bool UrlsModel::openUrlsFile(const QString &filename) {
 }
 
 //-----------------------------------------------------------------------------
-bool UrlsModel::uploadImages(const QString&) {
-    return false;
+bool UrlsModel::uploadImages(const QString &album) {
+    bool isExist = m_workDir.exists();
+    auto files = m_workDir.entryList(QDir::NoDotAndDotDot | QDir::Files);
+    bool existAll = std::all_of(m_items.begin(), m_items.end(), [&files](const Item &file) {
+        return files.contains(file.filename.c_str());
+    });
+
+    if(!isExist || files.isEmpty() || !existAll) {
+        return false;
+    }
+
+    return startUpload(album);
 }
 
 //-----------------------------------------------------------------------------
@@ -116,12 +128,11 @@ void UrlsModel::updateTaskStatus() {
 }
 
 //-----------------------------------------------------------------------------
-void UrlsModel::downloadTask(const QString &path, iterator begin, iterator end) {
+void UrlsModel::downloadTask(iterator begin, iterator end) {
     curl::CurlDownloader downloader;
 
     while(begin != end) {
-        QDir dir{path};
-        QString filename = dir.filePath(begin->filename.c_str());
+        QString filename = m_workDir.filePath(begin->filename.c_str());
 
         downloader.download(begin->link);
         downloader.save(filename.toStdString());
@@ -134,31 +145,75 @@ void UrlsModel::downloadTask(const QString &path, iterator begin, iterator end) 
 }
 
 //-----------------------------------------------------------------------------
-bool UrlsModel::startDownload(const QString &dir) {
+bool UrlsModel::startDownload() {
     auto pool = QThreadPool::globalInstance();
 
     m_completedTasks = 0;
 
     if((m_items.size() < m_maxThreads) || (m_maxThreads == 1)) {
-        pool->start([this, dir](){
-            downloadTask(dir, m_items.begin(), m_items.end());
+        pool->start([this](){
+            downloadTask(m_items.begin(), m_items.end());
         });
     } else {
         size_t count = m_items.size()/m_maxThreads;
         iterator cur = m_items.begin();
         for(int ii = 0; ii < (m_maxThreads - 1); ++ii) {
-            pool->start([this, dir, cur, count]() {
-                downloadTask(dir, cur, std::next(cur, count));
+            pool->start([this, cur, count]() {
+                downloadTask(cur, std::next(cur, count));
             });
             std::advance(cur, count);
         }
-        pool->start([this, dir, cur](){
-            downloadTask(dir, cur, m_items.end());
+        pool->start([this, cur](){
+            downloadTask(cur, m_items.end());
         });
     }
 
     emit downloadStart();
     return true;
+}
+
+//-----------------------------------------------------------------------------
+bool UrlsModel::startUpload(const QString &album) {
+    auto pool = QThreadPool::globalInstance();
+
+    m_completedTasks = 0;
+
+    if((m_items.size() < m_maxThreads) || (m_maxThreads == 1)) {
+        pool->start([this, album](){
+            uploadTask(album, m_items.begin(), m_items.end());
+        });
+    } else {
+        size_t count = m_items.size()/m_maxThreads;
+        iterator cur = m_items.begin();
+        for(int ii = 0; ii < (m_maxThreads - 1); ++ii) {
+            pool->start([this, album, cur, count]() {
+                uploadTask(album, cur, std::next(cur, count));
+            });
+            std::advance(cur, count);
+        }
+        pool->start([this, album, cur](){
+            uploadTask(album, cur, m_items.end());
+        });
+    }
+
+    emit uploadStart();
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+void UrlsModel::uploadTask(const QString &album, iterator begin, iterator end) {
+    ImageBan imageBan{"cvqx64FaleJ7dYclfNATYfWDWI2bQ0AqT2i"};
+
+    while(begin != end) {
+        QString filename = m_workDir.filePath(begin->filename.c_str());
+
+        imageBan.uploadImage(album.toStdString(), filename.toStdString());
+
+        emit itemComplete(begin, true);
+        std::advance(begin, 1);
+    }
+
+    emit taskComplete();
 }
 
 //-----------------------------------------------------------------------------
