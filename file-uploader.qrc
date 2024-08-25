@@ -8,5 +8,7 @@
         <file>img/update.png</file>
         <file>img/download.png</file>
         <file>img/open-folder.png</file>
+        <file>img/export-file.png</file>
+        <file>img/import-file.png</file>
     </qresource>
 </RCC>

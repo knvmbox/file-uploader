@@ -131,7 +131,7 @@
   <action name="openUrlsAction">
    <property name="icon">
     <iconset resource="file-uploader.qrc">
-     <normaloff>:/img/open-folder.png</normaloff>:/img/open-folder.png</iconset>
+     <normaloff>:/img/import-file.png</normaloff>:/img/import-file.png</iconset>
    </property>
    <property name="text">
     <string>Открыть URLs</string>
