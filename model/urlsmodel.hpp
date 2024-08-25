@@ -13,6 +13,7 @@
 #include <QProcess>
 
 #include "abstractmodel.hpp"
+#include "utils/imageban.hpp"
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -27,7 +28,8 @@ enum class ProcessType {
 ///////////////////////////////////////////////////////////////////////////////
 struct Item {
     std::string filename;
-    std::string link;
+    std::string downLink;
+    std::string upLink;
     ItemStatus status;
 };
 
@@ -62,11 +64,11 @@ protected:
     QVariant displayData(const QModelIndex &index) const override;
 
 private slots:
-    void updateItemStatus(iterator, ItemStatus);
+    void updateItemStatus(iterator, ItemStatus, imageban::image_t);
     void updateTaskStatus(ProcessType);
 
 signals:
-    void itemComplete(iterator, ItemStatus);
+    void itemComplete(iterator, ItemStatus, imageban::image_t);
     void taskComplete(ProcessType);
     void processComplete(ProcessType, bool);
     void processStart(ProcessType);
@@ -99,5 +101,6 @@ private:
 Q_DECLARE_METATYPE(iterator)
 Q_DECLARE_METATYPE(ItemStatus)
 Q_DECLARE_METATYPE(ProcessType)
+Q_DECLARE_METATYPE(imageban::image_t)
 
 #endif // URLSMODEL_HPP

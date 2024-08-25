@@ -20,6 +20,7 @@
 static constexpr int statusRow = 0;
 static constexpr int filenameRow = 1;
 static constexpr int downUrlRow = 2;
+static constexpr int upUrlRow = 3;
 
 //-----------------------------------------------------------------------------
 UrlsModel::UrlsModel(QObject *parent) :
@@ -32,10 +33,12 @@ UrlsModel::UrlsModel(QObject *parent) :
     addColumn("");
     addColumn("Filename");
     addColumn("Download URL");
+    addColumn("Uploadload URL");
 
     qRegisterMetaType<iterator>();
     qRegisterMetaType<ItemStatus>();
     qRegisterMetaType<ProcessType>();
+    qRegisterMetaType<imageban::image_t>();
 
     connect(this, &UrlsModel::itemComplete, this, &UrlsModel::updateItemStatus);
     connect(this, &UrlsModel::taskComplete, this, &UrlsModel::updateTaskStatus);
@@ -78,7 +81,7 @@ bool UrlsModel::openUrlsFile(const QString &filename) {
         }
 
         m_items.push_back(
-            {filename, line.toStdString(), ItemStatus::NullStatus}
+            {filename, line.toStdString(), "", ItemStatus::NullStatus}
         );
         filenamesSet.insert(filename);
     }
@@ -128,15 +131,17 @@ QVariant UrlsModel::displayData(const QModelIndex &index) const {
 
     switch(index.column()) {
     case filenameRow: return m_items[index.row()].filename.c_str();
-    case downUrlRow: return m_items[index.row()].link.c_str();
+    case downUrlRow: return m_items[index.row()].downLink.c_str();
+    case upUrlRow: return m_items[index.row()].upLink.c_str();
     }
 
     return QVariant{};
 }
 
 //-----------------------------------------------------------------------------
-void UrlsModel::updateItemStatus(iterator it, ItemStatus status) {
+void UrlsModel::updateItemStatus(iterator it, ItemStatus status, imageban::image_t image) {
     int row = std::distance(m_items.begin(), it);
+    it->upLink = image.link;
     it->status = status;
 
     emit dataChanged(index(row, 0), index(row, columnCount({})));
@@ -169,10 +174,10 @@ void UrlsModel::downloadTask(iterator begin, iterator end) {
     while(begin != end) {
         QString filename = m_workDir.filePath(begin->filename.c_str());
 
-        downloader.download(begin->link);
+        downloader.download(begin->downLink);
         downloader.save(filename.toStdString());
 
-        emit itemComplete(begin, ItemStatus::DownloadedStatus);
+        emit itemComplete(begin, ItemStatus::DownloadedStatus, {});
         std::advance(begin, 1);
     }
 
@@ -242,9 +247,9 @@ void UrlsModel::uploadTask(const QString &album, iterator begin, iterator end) {
     while(begin != end) {
         QString filename = m_workDir.filePath(begin->filename.c_str());
 
-        imageBan.uploadImage(album.toStdString(), filename.toStdString());
+        auto image = imageBan.uploadImage(album.toStdString(), filename.toStdString());
 
-        emit itemComplete(begin, ItemStatus::UploadedStatus);
+        emit itemComplete(begin, ItemStatus::UploadedStatus, image);
         std::advance(begin, 1);
     }
 
