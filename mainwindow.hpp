@@ -26,6 +26,7 @@ private:
 
 private slots:
     void downloadFiles();
+    void openParams();
     void openUrls();
     void processCompleted(ProcessType,bool);
     void processStarted(ProcessType);

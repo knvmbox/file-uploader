@@ -5,10 +5,10 @@
 
 
 //-----------------------------------------------------------------------------
-UploadImagesDlg::UploadImagesDlg(QWidget *parent) :
+UploadImagesDlg::UploadImagesDlg(std::string secretKey, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::UploadImagesDlg),
-    m_imageBan{"cvqx64FaleJ7dYclfNATYfWDWI2bQ0AqT2i"} {
+    m_imageBan{std::move(secretKey)} {
     ui->setupUi(this);
 
     showNewAlbumsWidgets(false);

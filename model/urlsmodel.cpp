@@ -11,6 +11,7 @@
 #include <QThreadPool>
 #include <QUrl>
 
+#include "../settings.hpp"
 #include "../utils/curlutils.hpp"
 #include "../utils/imageban.hpp"
 #include "urlsmodel.hpp"
@@ -258,7 +259,8 @@ bool UrlsModel::startUpload(const QString &album) {
 
 //-----------------------------------------------------------------------------
 void UrlsModel::uploadTask(const QString &album, iterator begin, iterator end) {
-    imageban::ImageBan imageBan{"cvqx64FaleJ7dYclfNATYfWDWI2bQ0AqT2i"};
+    Settings settings;
+    imageban::ImageBan imageBan{settings.secretKey()};
 
     while(begin != end) {
         QString filename = m_workDir.filePath(begin->filename.c_str());

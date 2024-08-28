@@ -1,6 +1,7 @@
 #include <QFileDialog>
 
 #include "mainwindow.hpp"
+#include "parametersdlg.hpp"
 #include "uploadimagesdlg.hpp"
 #include "ui_mainwindow.h"
 
@@ -16,10 +17,12 @@ MainWindow::MainWindow(QWidget *parent)
     ui->dirSelector->setMode(FileSelector::OpenDir);
     ui->urlsView->setModel(m_urlsModel.get());
 
-    connect(ui->dirSelector, SIGNAL(fileSelected(const QString&)), this, SLOT(updateState()));
     connect(ui->openUrlsAction, SIGNAL(triggered(bool)), this, SLOT(openUrls()));
-    connect(ui->downloadBtn, SIGNAL(clicked(bool)), this, SLOT(downloadFiles()));
     connect(ui->exportUrlsAction, SIGNAL(triggered(bool)), this, SLOT(saveUrls()));
+    connect(ui->paramsAction, SIGNAL(triggered(bool)), this, SLOT(openParams()));
+
+    connect(ui->dirSelector, SIGNAL(fileSelected(const QString&)), this, SLOT(updateState()));
+    connect(ui->downloadBtn, SIGNAL(clicked(bool)), this, SLOT(downloadFiles()));
     connect(ui->uploadBtn, SIGNAL(clicked(bool)), this, SLOT(uploadFiles()));
 
     connect(m_urlsModel.get(), &UrlsModel::processComplete, this, &MainWindow::processCompleted);
@@ -76,6 +79,12 @@ void MainWindow::downloadFiles() {
 }
 
 //-----------------------------------------------------------------------------
+void MainWindow::openParams() {
+    ParametersDlg dlg{this};
+    dlg.exec();
+}
+
+//-----------------------------------------------------------------------------
 void MainWindow::openUrls() {
     auto filename = QFileDialog::getOpenFileName(
         ui->centralwidget, windowTitle(), ".",
@@ -117,7 +126,8 @@ void MainWindow::updateState() {
 
 //-----------------------------------------------------------------------------
 void MainWindow::uploadFiles() {
-    UploadImagesDlg dlg(this);
+    Settings settings;
+    UploadImagesDlg dlg(settings.secretKey(), this);
 
     auto res = dlg.exec();
     if(res == QDialog::Rejected) {

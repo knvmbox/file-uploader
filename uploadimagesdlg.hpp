@@ -1,8 +1,11 @@
 #ifndef UPLOADIMAGESDLG_HPP
 #define UPLOADIMAGESDLG_HPP
 
+#include <string>
+
 #include <QDialog>
 
+#include "settings.hpp"
 #include "utils/imageban.hpp"
 
 
@@ -15,7 +18,7 @@ class UploadImagesDlg : public QDialog
     Q_OBJECT
 
 public:
-    explicit UploadImagesDlg(QWidget *parent = nullptr);
+    explicit UploadImagesDlg(std::string secretKey, QWidget *parent = nullptr);
     ~UploadImagesDlg();
 
     imageban::album_t album();

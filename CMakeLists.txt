@@ -17,12 +17,15 @@ find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets REQUIRED)
 set(PROJECT_SOURCES
     model/abstractmodel.cpp
     model/urlsmodel.cpp
-    widgets/fileselector.cpp
     main.cpp
     mainwindow.cpp
+    parametersdlg.cpp
+    settings.cpp
     uploadimagesdlg.cpp
+    widgets/fileselector.cpp
 
     mainwindow.ui
+    parametersdlg.ui
     uploadimagesdlg.ui
 
     file-uploader.qrc
@@ -31,10 +34,12 @@ set(PROJECT_SOURCES
 set(PROJECT_HEADERS
     model/abstractmodel.hpp
     model/urlsmodel.hpp
-    widgets/fileselector.hpp
     mainwindow.hpp
+    parametersdlg.hpp
+    settings.hpp
     uploadimagesdlg.hpp
     utils/curldownloader.hpp
+    widgets/fileselector.hpp
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

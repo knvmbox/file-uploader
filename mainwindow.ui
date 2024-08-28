@@ -127,7 +127,14 @@
     <addaction name="openUrlsAction"/>
     <addaction name="exportUrlsAction"/>
    </widget>
+   <widget class="QMenu" name="menu">
+    <property name="title">
+     <string>Настройки</string>
+    </property>
+    <addaction name="paramsAction"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menu"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <widget class="QToolBar" name="toolBar">
@@ -168,6 +175,11 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+E</string>
+   </property>
+  </action>
+  <action name="paramsAction">
+   <property name="text">
+    <string>Параметры</string>
    </property>
   </action>
  </widget>
