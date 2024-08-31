@@ -65,11 +65,11 @@ protected:
     QVariant displayData(const QModelIndex &index) const override;
 
 private slots:
-    void updateItemStatus(iterator, ItemStatus, imageban::image_t);
+    void updateItemStatus(iterator, Item);
     void updateTaskStatus(ProcessType);
 
 signals:
-    void itemComplete(iterator, ItemStatus, imageban::image_t);
+    void itemComplete(iterator, Item);
     void taskComplete(ProcessType);
     void processComplete(ProcessType, bool);
     void processStart(ProcessType);
@@ -81,6 +81,8 @@ private:
 
 private:
     void downloadTask(iterator, iterator);
+    bool isWebpImage(const std::string &filename);
+    std::string replaceExt(const std::string &filename, const std::string &ext);
     bool startDownload();
     bool startUpload(const QString &album);
     void uploadTask(const QString&, iterator, iterator);
@@ -100,7 +102,7 @@ private:
 };
 
 Q_DECLARE_METATYPE(iterator)
-Q_DECLARE_METATYPE(ItemStatus)
+Q_DECLARE_METATYPE(Item)
 Q_DECLARE_METATYPE(ProcessType)
 Q_DECLARE_METATYPE(imageban::image_t)
 

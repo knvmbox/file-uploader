@@ -39,6 +39,7 @@ set(PROJECT_HEADERS
     settings.hpp
     uploadimagesdlg.hpp
     utils/curldownloader.hpp
+    utils/webpdecoder.hpp
     widgets/fileselector.hpp
 )
 
@@ -79,16 +80,67 @@ else(CURL_FOUND)
   message(FATAL_ERROR "Could not find the CURL library and development files.")
 endif()
 
+add_library(exampleutil STATIC IMPORTED)
+set_target_properties(exampleutil PROPERTIES
+  IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/ext-lib/webp/libs/libexampleutil.a"
+  INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/ext-lib/webp/"
+)
+
+add_library(imagedec STATIC IMPORTED)
+set_target_properties(imagedec PROPERTIES
+  IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/ext-lib/webp/libs/libimagedec.a"
+  INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/ext-lib/webp/"
+)
+
+add_library(imageenc STATIC IMPORTED)
+set_target_properties(imageenc PROPERTIES
+  IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/ext-lib/webp/libs/libimageenc.a"
+  INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/ext-lib/webp/"
+)
+
+add_library(imageioutil STATIC IMPORTED)
+set_target_properties(imageioutil PROPERTIES
+  IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/ext-lib/webp/libs/libimageioutil.a"
+  INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/ext-lib/webp/"
+)
+
+add_library(sharpyuv STATIC IMPORTED)
+set_target_properties(sharpyuv PROPERTIES
+  IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/ext-lib/webp/libs/libsharpyuv.a"
+  INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/ext-lib/webp/"
+)
+
+add_library(webp STATIC IMPORTED)
+set_target_properties(webp PROPERTIES
+  IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/ext-lib/webp/libs/libwebp.a"
+  INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/ext-lib/webp/"
+)
+
+add_library(webpdemux STATIC IMPORTED)
+set_target_properties(webpdemux PROPERTIES
+  IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/ext-lib/webp/libs/libwebpdemux.a"
+  INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/ext-lib/webp/"
+)
 
 target_include_directories(
     ${PROJECT_NAME} PRIVATE
     ext-lib
+    ext-lib/webp
 )
 
 target_link_libraries(
     ${PROJECT_NAME} PRIVATE
     Qt${QT_VERSION_MAJOR}::Widgets
     ${requiredlibs}
+    exampleutil
+    imagedec
+    imageenc
+    webpdemux
+    png
+    z
+    imageioutil
+    webp
+    sharpyuv
 )
 
 set_target_properties(file-uploader PROPERTIES

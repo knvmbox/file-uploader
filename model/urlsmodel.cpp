@@ -14,6 +14,7 @@
 #include "../settings.hpp"
 #include "../utils/curlutils.hpp"
 #include "../utils/imageban.hpp"
+#include "../utils/webpdecoder.hpp"
 #include "urlsmodel.hpp"
 
 
@@ -37,7 +38,7 @@ UrlsModel::UrlsModel(QObject *parent) :
     addColumn("Uploadload URL");
 
     qRegisterMetaType<iterator>();
-    qRegisterMetaType<ItemStatus>();
+    qRegisterMetaType<Item>();
     qRegisterMetaType<ProcessType>();
     qRegisterMetaType<imageban::image_t>();
 
@@ -156,10 +157,12 @@ QVariant UrlsModel::displayData(const QModelIndex &index) const {
 }
 
 //-----------------------------------------------------------------------------
-void UrlsModel::updateItemStatus(iterator it, ItemStatus status, imageban::image_t image) {
+void UrlsModel::updateItemStatus(iterator it, Item item) {
     int row = std::distance(m_items.begin(), it);
-    it->upLink = image.link;
-    it->status = status;
+
+    it->filename = std::move(item.filename);
+    it->upLink = std::move(item.upLink);
+    it->status = item.status;
 
     emit dataChanged(index(row, 0), index(row, columnCount({})));
 }
@@ -189,16 +192,44 @@ void UrlsModel::downloadTask(iterator begin, iterator end) {
     curl::CurlDownloader downloader;
 
     while(begin != end) {
-        QString filename = m_workDir.filePath(begin->filename.c_str());
+        auto item = *begin;
+        QString filename = m_workDir.filePath(item.filename.c_str());
 
-        downloader.download(begin->downLink);
-        downloader.save(filename.toStdString());
+        downloader.download(item.downLink);
+        item.status = ItemStatus::DownloadedStatus;
 
-        emit itemComplete(begin, ItemStatus::DownloadedStatus, {});
+        if(isWebpImage(item.filename)) {
+            WebpDecoder decoder(
+                reinterpret_cast<const uint8_t*>(downloader.data()), downloader.size()
+            );
+            decoder.save(replaceExt(filename.toStdString(), "png"));
+            item.filename = replaceExt(item.filename, "png");
+        } else {
+            downloader.save(filename.toStdString());
+        }
+
+        emit itemComplete(begin, item);
         std::advance(begin, 1);
     }
 
     emit taskComplete(ProcessType::DownloadProcess);
+}
+
+//-----------------------------------------------------------------------------
+bool UrlsModel::isWebpImage(const std::string &filename) {
+    std::filesystem::path path{filename};
+
+    std::string stem = path.extension();
+    std::transform(stem.begin(), stem.end(), stem.begin(), ::toupper);
+
+    return (stem == ".WEBP");
+}
+
+//-----------------------------------------------------------------------------
+std::string UrlsModel::replaceExt(const std::string &filename, const std::string &ext) {
+    std::filesystem::path path{filename};
+    path.replace_extension("." + ext);
+    return path;
 }
 
 //-----------------------------------------------------------------------------
@@ -263,11 +294,14 @@ void UrlsModel::uploadTask(const QString &album, iterator begin, iterator end) {
     imageban::ImageBan imageBan{settings.secretKey()};
 
     while(begin != end) {
-        QString filename = m_workDir.filePath(begin->filename.c_str());
+        auto item = *begin;
+        QString filename = m_workDir.filePath(item.filename.c_str());
 
         auto image = imageBan.uploadImage(album.toStdString(), filename.toStdString());
+        item.status = ItemStatus::UploadedStatus;
+        item.upLink = image.link;
 
-        emit itemComplete(begin, ItemStatus::UploadedStatus, image);
+        emit itemComplete(begin, item);
         std::advance(begin, 1);
     }
 
