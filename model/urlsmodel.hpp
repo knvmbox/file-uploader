@@ -80,6 +80,7 @@ private:
     }
 
 private:
+    std::string createBbCode(std::string);
     void downloadTask(iterator, iterator);
     bool isWebpImage(const std::string &filename);
     std::string replaceExt(const std::string &filename, const std::string &ext);

@@ -11,6 +11,8 @@
 #include <QThreadPool>
 #include <QUrl>
 
+#include <fmt/core.h>
+
 #include "../settings.hpp"
 #include "../utils/curlutils.hpp"
 #include "../utils/imageban.hpp"
@@ -161,7 +163,7 @@ void UrlsModel::updateItemStatus(iterator it, Item item) {
     int row = std::distance(m_items.begin(), it);
 
     it->filename = std::move(item.filename);
-    it->upLink = std::move(item.upLink);
+    it->upLink = createBbCode(std::move(item.upLink));
     it->status = item.status;
 
     emit dataChanged(index(row, 0), index(row, columnCount({})));
@@ -185,6 +187,70 @@ void UrlsModel::updateTaskStatus(ProcessType type) {
         );
         m_completedTasks = 0;
     }
+}
+
+//-----------------------------------------------------------------------------
+std::string UrlsModel::createBbCode(std::string link) {
+    constexpr char* IMAGEBAN_URL = "imageban.ru";
+    constexpr char* OUT_WORD = "out";
+    constexpr char* THUMBS_WORD = "thumbs";
+    constexpr size_t YEAR_COUNT = 4;
+    constexpr size_t MONTH_COUNT = 2;
+
+
+    std::string url{link};
+
+    if(link.empty()) {
+        return link;
+    }
+
+    auto pos = url.find(IMAGEBAN_URL);
+    if(pos == std::string::npos) {
+        throw std::out_of_range("Can't find 'imageban.ru' URL!");
+    }
+    url.erase(8, pos - 8);
+
+    pos = url.find(OUT_WORD);
+    if(pos == std::string::npos) {
+        throw std::out_of_range("Can't find 'out' word!");
+    }
+    url.erase(pos, std::strlen(OUT_WORD));
+    url.insert(pos, "show");
+
+    pos = url.find_last_of(".");
+    if(pos == std::string::npos) {
+        throw std::out_of_range("Can't find extension dot!");
+    }
+    url.erase(pos, 1);
+    url.insert(pos, "/");
+
+    pos = link.find(OUT_WORD);
+    if(pos == std::string::npos) {
+        throw std::out_of_range("Can't find 'out' word!");
+    }
+    link.erase(pos, std::strlen(OUT_WORD));
+    link.insert(pos, THUMBS_WORD);
+
+    pos = link.find(THUMBS_WORD);
+    if(pos == std::string::npos) {
+        throw std::out_of_range("Can't find 'thumbs' word!");
+    }
+
+    pos += std::strlen(THUMBS_WORD) + 1 + YEAR_COUNT;
+    if(pos >= link.size()) {
+        throw std::out_of_range("Can't find year digits!");
+    }
+    link.erase(pos, 1);
+    link.insert(pos, ".");
+
+    pos += 1 + MONTH_COUNT;
+    if(pos >= link.size()) {
+        throw std::out_of_range("Can't find month digits!");
+    }
+    link.erase(pos, 1);
+    link.insert(pos, ".");
+
+    return fmt::format("[URL={0}][IMG]{1}[/IMG][/URL]", url, link);
 }
 
 //-----------------------------------------------------------------------------

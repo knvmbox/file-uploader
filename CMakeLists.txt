@@ -15,6 +15,7 @@ find_package(QT NAMES Qt6 Qt5 COMPONENTS Widgets REQUIRED)
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets REQUIRED)
 
 set(PROJECT_SOURCES
+    ext-lib/fmt/src/format.cc
     model/abstractmodel.cpp
     model/urlsmodel.cpp
     main.cpp
@@ -125,6 +126,7 @@ set_target_properties(webpdemux PROPERTIES
 target_include_directories(
     ${PROJECT_NAME} PRIVATE
     ext-lib
+    ext-lib/fmt/include
     ext-lib/webp
 )
 
