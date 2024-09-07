@@ -1,5 +1,8 @@
 #include <QFileDialog>
 
+#include <common/logger/loggerfactory.hpp>
+#include <common/qtwidgets/plaintextlogger.hpp>
+
 #include "mainwindow.hpp"
 #include "parametersdlg.hpp"
 #include "uploadimagesdlg.hpp"
@@ -10,9 +13,12 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
+    , m_logger{common::LoggerFactory::instance()}
     , m_urlsModel{new UrlsModel}
 {
     ui->setupUi(this);
+
+    common::LoggerFactory::setupLogger(new common::PlainTextLogger{ui->loggerEdit});
 
     ui->dirSelector->setMode(FileSelector::OpenDir);
     ui->urlsView->setModel(m_urlsModel.get());
@@ -36,12 +42,6 @@ MainWindow::~MainWindow()
 }
 
 //-----------------------------------------------------------------------------
-void MainWindow::error(const QString &str) {
-    QString text = QString("[ERROR] %1").arg(str);
-    ui->loggerEdit->appendPlainText(text);
-}
-
-//-----------------------------------------------------------------------------
 void MainWindow::lockUi(bool state) {
     ui->openUrlsAction->setDisabled(state);
     ui->downloadBtn->setDisabled(state);
@@ -57,14 +57,14 @@ void MainWindow::processCompleted(model::ProcessType type, bool status) {
             ? "Загрузка изображений успешно завершена"
             : "Выгрузка изображений успешно завершена"
         );
-        ui->loggerEdit->appendPlainText(text);
+        m_logger->info(text);
     } else {
         auto text = (
             (type == model::ProcessType::DownloadProcess)
             ? "Не удалось загрузить файлы"
             : "Не удалось выгрузить файлы"
         );
-        error(text);
+        m_logger->error(text);
     }
 
     lockUi(false);
@@ -74,7 +74,7 @@ void MainWindow::processCompleted(model::ProcessType type, bool status) {
 void MainWindow::downloadFiles() {
     bool res = m_urlsModel->downloadImages(ui->dirSelector->filename());
     if(!res) {
-        error("Ошибка при запуске загрузки файлов");
+        m_logger->error("Ошибка при запуске загрузки файлов");
     }
 }
 
@@ -103,7 +103,7 @@ void MainWindow::processStarted(model::ProcessType type) {
         : "Выгрузка изображений запущена"
     );
 
-    ui->loggerEdit->appendPlainText(text);
+    m_logger->info(text.toStdString());
     lockUi(true);
 }
 
@@ -137,6 +137,6 @@ void MainWindow::uploadFiles() {
     auto album = dlg.album();
     auto isUploaded = m_urlsModel->uploadImages(album.id.c_str());
     if(!isUploaded) {
-        error("Ошибка при запуске выгрузки файлов");
+        m_logger->error("Ошибка при запуске выгрузки файлов");
     }
 }

@@ -16,6 +16,8 @@ find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets REQUIRED)
 
 set(PROJECT_SOURCES
     ext-lib/fmt/src/format.cc
+    lib/common/logger/loggerfactory.cpp
+    lib/common/qtwidgets/plaintextlogger.cpp
     model/abstractmodel.cpp
     model/urlsmodel.cpp
     main.cpp
@@ -33,6 +35,9 @@ set(PROJECT_SOURCES
 )
 
 set(PROJECT_HEADERS
+    lib/common/qtwidgets/plaintextlogger.hpp
+    lib/common/logger/loggerfactory.hpp
+    lib/common/queue.hpp
     model/abstractmodel.hpp
     model/urlsmodel.hpp
     mainwindow.hpp
@@ -79,6 +84,7 @@ target_include_directories(
     ext-lib
     ext-lib/fmt/include
     ext-lib/webp
+    lib
 )
 
 target_link_libraries(

@@ -12,6 +12,8 @@
 #include <QThreadPool>
 #include <QUrl>
 
+#include <common/logger/loggerfactory.hpp>
+#include <common/logger/loggerutils.hpp>
 #include <fmt/core.h>
 
 #include "../settings.hpp"
@@ -30,19 +32,24 @@ static constexpr int upUrlRow = 3;
 ///////////////////////////////////////////////////////////////////////////////
 template <typename F>
 struct PoolJob : public QRunnable {
-    PoolJob(F f) : m_f{std::move(f)} {
+    PoolJob(F f) :
+        m_f{std::move(f)},
+        m_logger{common::LoggerFactory::instance()} {
     }
 
     void run() override {
+        m_logger->info("Job started!");
         std::invoke(m_f);
     }
 
     F m_f;
+    std::shared_ptr<common::Logger> m_logger;
 };
 
 //-----------------------------------------------------------------------------
 UrlsModel::UrlsModel(QObject *parent) :
     AbstractModel{parent},
+    m_logger{common::LoggerFactory::instance()},
     m_completedTasks{0},
     m_maxThreads{static_cast<size_t>(QThread::idealThreadCount())},
     m_downIcon{":/img/down.png"},
@@ -185,8 +192,11 @@ void UrlsModel::updateItemStatus(model::iterator it, model::Item item) {
 }
 
 //-----------------------------------------------------------------------------
-void UrlsModel::updateTaskStatus(model::ProcessType type, bool) {
-    ++m_completedTasks;    
+void UrlsModel::updateTaskStatus(model::ProcessType type) {
+    ++m_completedTasks;
+
+    common::log::info(m_logger, "Завершена задача", m_completedTasks, "из", m_maxThreads);
+
     if(m_completedTasks == m_maxThreads) {
         auto status = (
             (type == model::ProcessType::DownloadProcess)
@@ -304,12 +314,11 @@ void UrlsModel::downloadTask(model::iterator begin, model::iterator end) {
             emit itemComplete(begin, item);
             std::advance(begin, 1);
         }
-
-        emit taskComplete(model::ProcessType::DownloadProcess, true);
-
     } catch(curl::curl_error &e) {
-        emit taskComplete(model::ProcessType::DownloadProcess, false);
+        m_logger->error(e.what());
     }
+
+    emit taskComplete(model::ProcessType::DownloadProcess);
 
 }
 
@@ -404,10 +413,10 @@ void UrlsModel::uploadTask(const QString &album, model::iterator begin, model::i
             std::advance(begin, 1);
         }
     } catch(imageban::imageban_error &e) {
-        emit taskComplete(model::ProcessType::UploadProcess, false);
+        m_logger->info(e.what());
     }
 
-    emit taskComplete(model::ProcessType::UploadProcess, true);
+    emit taskComplete(model::ProcessType::UploadProcess);
 }
 
 //-----------------------------------------------------------------------------

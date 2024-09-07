@@ -12,6 +12,8 @@
 #include <QIcon>
 #include <QProcess>
 
+#include <common/logger/logger.hpp>
+
 #include "abstractmodel.hpp"
 #include "utils/imageban.hpp"
 
@@ -70,11 +72,11 @@ protected:
 
 private slots:
     void updateItemStatus(model::iterator, model::Item);
-    void updateTaskStatus(model::ProcessType, bool);
+    void updateTaskStatus(model::ProcessType);
 
 signals:
     void itemComplete(model::iterator, model::Item);
-    void taskComplete(model::ProcessType, bool);
+    void taskComplete(model::ProcessType);
     void processComplete(model::ProcessType, bool);
     void processStart(model::ProcessType);
 
@@ -96,6 +98,7 @@ private:
     std::string uniqueFilename(const std::unordered_set<std::string>&, const std::string&);
 
 private:
+    std::shared_ptr<common::Logger> m_logger;
     std::vector<model::Item> m_items;
     QDir m_workDir;
 

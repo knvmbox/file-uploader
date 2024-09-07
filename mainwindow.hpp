@@ -5,6 +5,8 @@
 
 #include <QMainWindow>
 
+#include <common/logger/logger.hpp>
+
 #include "model/urlsmodel.hpp"
 
 
@@ -21,7 +23,6 @@ public:
     ~MainWindow();
 
 private:
-    void error(const QString&);
     void lockUi(bool);
 
 private slots:
@@ -36,7 +37,7 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
-
+    std::shared_ptr<common::Logger> m_logger;
     std::unique_ptr<UrlsModel> m_urlsModel;
 };
 #endif // MAINWINDOW_HPP
