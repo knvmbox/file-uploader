@@ -413,7 +413,7 @@ void UrlsModel::uploadTask(const QString &album, model::iterator begin, model::i
             std::advance(begin, 1);
         }
     } catch(imageban::imageban_error &e) {
-        m_logger->info(e.what());
+        m_logger->error(e.what());
     }
 
     emit taskComplete(model::ProcessType::UploadProcess);
