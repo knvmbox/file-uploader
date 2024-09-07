@@ -21,7 +21,12 @@ MainWindow::MainWindow(QWidget *parent)
     common::LoggerFactory::setupLogger(new common::PlainTextLogger{ui->loggerEdit});
 
     ui->dirSelector->setMode(FileSelector::OpenDir);
+
     ui->urlsView->setModel(m_urlsModel.get());
+    ui->urlsView->horizontalHeader()->resizeSection(0, 16);
+    ui->urlsView->horizontalHeader()->resizeSection(1, 350);
+    ui->urlsView->horizontalHeader()->resizeSection(2, 350);
+    ui->urlsView->verticalHeader()->setDefaultSectionSize(24);
 
     connect(ui->openUrlsAction, SIGNAL(triggered(bool)), this, SLOT(openUrls()));
     connect(ui->exportUrlsAction, SIGNAL(triggered(bool)), this, SLOT(saveUrls()));
