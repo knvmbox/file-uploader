@@ -72,6 +72,7 @@ else(CURL_FOUND)
 endif()
 
 include(cmake/webp.cmake)
+include(cmake/qxlsx.cmake)
 
 target_include_directories(
     ${PROJECT_NAME} PRIVATE
@@ -94,6 +95,7 @@ target_link_libraries(
     webp
     sharpyuv
     pthread
+    qxlsxqt5
 )
 
 set_target_properties(file-uploader PROPERTIES
