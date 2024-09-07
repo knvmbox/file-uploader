@@ -39,7 +39,7 @@ set(PROJECT_HEADERS
     parametersdlg.hpp
     settings.hpp
     uploadimagesdlg.hpp
-    utils/curldownloader.hpp
+    utils/curlutils.hpp
     utils/webpdecoder.hpp
     widgets/fileselector.hpp
 )
@@ -50,22 +50,12 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         ${PROJECT_SOURCES}
         ${PROJECT_HEADERS}
     )
-# Define target properties for Android with Qt 6 as:
-#    set_property(TARGET file-uploader APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
-#                 ${CMAKE_CURRENT_SOURCE_DIR}/android)
-# For more information, see https://doc.qt.io/qt-6/qt-add-executable.html#target-creation
 else()
-    if(ANDROID)
-        add_library(file-uploader SHARED
-            ${PROJECT_SOURCES}
-        )
-# Define properties for Android with Qt 5 after find_package() calls as:
-#    set(ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android")
-    else()
-        add_executable(file-uploader
-            ${PROJECT_SOURCES}
-        )
-    endif()
+    add_executable(
+        ${PROJECT_NAME}
+        ${PROJECT_SOURCES}
+        ${PROJECT_HEADERS}
+    )
 endif()
 
 set(requiredlibs)
@@ -81,47 +71,7 @@ else(CURL_FOUND)
   message(FATAL_ERROR "Could not find the CURL library and development files.")
 endif()
 
-add_library(exampleutil STATIC IMPORTED)
-set_target_properties(exampleutil PROPERTIES
-  IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/ext-lib/webp/libs/libexampleutil.a"
-  INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/ext-lib/webp/"
-)
-
-add_library(imagedec STATIC IMPORTED)
-set_target_properties(imagedec PROPERTIES
-  IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/ext-lib/webp/libs/libimagedec.a"
-  INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/ext-lib/webp/"
-)
-
-add_library(imageenc STATIC IMPORTED)
-set_target_properties(imageenc PROPERTIES
-  IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/ext-lib/webp/libs/libimageenc.a"
-  INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/ext-lib/webp/"
-)
-
-add_library(imageioutil STATIC IMPORTED)
-set_target_properties(imageioutil PROPERTIES
-  IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/ext-lib/webp/libs/libimageioutil.a"
-  INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/ext-lib/webp/"
-)
-
-add_library(sharpyuv STATIC IMPORTED)
-set_target_properties(sharpyuv PROPERTIES
-  IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/ext-lib/webp/libs/libsharpyuv.a"
-  INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/ext-lib/webp/"
-)
-
-add_library(webp STATIC IMPORTED)
-set_target_properties(webp PROPERTIES
-  IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/ext-lib/webp/libs/libwebp.a"
-  INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/ext-lib/webp/"
-)
-
-add_library(webpdemux STATIC IMPORTED)
-set_target_properties(webpdemux PROPERTIES
-  IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/ext-lib/webp/libs/libwebpdemux.a"
-  INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/ext-lib/webp/"
-)
+include(cmake/webp.cmake)
 
 target_include_directories(
     ${PROJECT_NAME} PRIVATE
