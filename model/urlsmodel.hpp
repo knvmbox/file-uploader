@@ -16,6 +16,8 @@
 #include "utils/imageban.hpp"
 
 
+namespace model {
+
 ///////////////////////////////////////////////////////////////////////////////
 enum class ItemStatus {
     NullStatus, DownloadedStatus, UploadedStatus
@@ -36,6 +38,8 @@ struct Item {
 ///////////////////////////////////////////////////////////////////////////////
 using iterator = std::vector<Item>::iterator;
 
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 class UrlsModel : public AbstractModel
 {
@@ -53,7 +57,7 @@ public:
 public:
     bool canUpload() {
         return std::all_of(m_items.begin(), m_items.end(), [](const auto &item){
-            return (item.status != ItemStatus::NullStatus);
+            return (item.status != model::ItemStatus::NullStatus);
         });
     }
     int rowCount(const QModelIndex &parent = QModelIndex()) const override {
@@ -65,14 +69,14 @@ protected:
     QVariant displayData(const QModelIndex &index) const override;
 
 private slots:
-    void updateItemStatus(iterator, Item);
-    void updateTaskStatus(ProcessType);
+    void updateItemStatus(model::iterator, model::Item);
+    void updateTaskStatus(model::ProcessType);
 
 signals:
-    void itemComplete(iterator, Item);
-    void taskComplete(ProcessType);
-    void processComplete(ProcessType, bool);
-    void processStart(ProcessType);
+    void itemComplete(model::iterator, model::Item);
+    void taskComplete(model::ProcessType);
+    void processComplete(model::ProcessType, bool);
+    void processStart(model::ProcessType);
 
 private:
     void clearModel() {
@@ -82,17 +86,17 @@ private:
 private:
     std::string createBbCode(std::string);
     std::string createBbCodeAsText(std::string);
-    void downloadTask(iterator, iterator);
+    void downloadTask(model::iterator, model::iterator);
     bool isWebpImage(const std::string &filename);
     std::string replaceExt(const std::string &filename, const std::string &ext);
     bool startDownload();
     bool startUpload(const QString &album);
-    void uploadTask(const QString&, iterator, iterator);
+    void uploadTask(const QString&, model::iterator, model::iterator);
 
     std::string uniqueFilename(const std::unordered_set<std::string>&, const std::string&);
 
 private:
-    std::vector<Item> m_items;
+    std::vector<model::Item> m_items;
     QDir m_workDir;
 
     size_t m_completedTasks;
@@ -103,9 +107,9 @@ private:
     QIcon m_grayIcon;
 };
 
-Q_DECLARE_METATYPE(iterator)
-Q_DECLARE_METATYPE(Item)
-Q_DECLARE_METATYPE(ProcessType)
+Q_DECLARE_METATYPE(model::iterator)
+Q_DECLARE_METATYPE(model::Item)
+Q_DECLARE_METATYPE(model::ProcessType)
 Q_DECLARE_METATYPE(imageban::image_t)
 
 #endif // URLSMODEL_HPP

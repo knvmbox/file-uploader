@@ -50,17 +50,17 @@ void MainWindow::lockUi(bool state) {
 }
 
 //-----------------------------------------------------------------------------
-void MainWindow::processCompleted(ProcessType type, bool status) {
+void MainWindow::processCompleted(model::ProcessType type, bool status) {
     if(status) {
         auto text = (
-            (type == ProcessType::DownloadProcess)
+            (type == model::ProcessType::DownloadProcess)
             ? "Загрузка изображений успешно завершена"
             : "Выгрузка изображений успешно завершена"
         );
         ui->loggerEdit->appendPlainText(text);
     } else {
         auto text = (
-            (type == ProcessType::DownloadProcess)
+            (type == model::ProcessType::DownloadProcess)
             ? "Не удалось загрузить файлы"
             : "Не удалось выгрузить файлы"
         );
@@ -96,9 +96,9 @@ void MainWindow::openUrls() {
 }
 
 //-----------------------------------------------------------------------------
-void MainWindow::processStarted(ProcessType type) {
+void MainWindow::processStarted(model::ProcessType type) {
     QString text = (
-        (type == ProcessType::DownloadProcess)
+        (type == model::ProcessType::DownloadProcess)
         ? "Загрузка изображений запущена"
         : "Выгрузка изображений запущена"
     );

@@ -53,9 +53,9 @@ UrlsModel::UrlsModel(QObject *parent) :
     addColumn("Download URL");
     addColumn("Uploadload URL");
 
-    qRegisterMetaType<iterator>();
-    qRegisterMetaType<Item>();
-    qRegisterMetaType<ProcessType>();
+    qRegisterMetaType<model::iterator>();
+    qRegisterMetaType<model::Item>();
+    qRegisterMetaType<model::ProcessType>();
     qRegisterMetaType<imageban::image_t>();
 
     connect(this, &UrlsModel::itemComplete, this, &UrlsModel::updateItemStatus);
@@ -101,7 +101,7 @@ bool UrlsModel::openUrlsFile(const QString &filename) {
         }
 
         m_items.push_back(
-            {filename, line.toStdString(), "", ItemStatus::NullStatus}
+            {filename, line.toStdString(), "", model::ItemStatus::NullStatus}
         );
         filenamesSet.insert(filename);
     }
@@ -128,8 +128,9 @@ bool UrlsModel::saveUrlsFile(const QString &filename) {
 bool UrlsModel::uploadImages(const QString &album) {
     bool isExist = m_workDir.exists();
     auto files = m_workDir.entryList(QDir::NoDotAndDotDot | QDir::Files);
-    bool existAll = std::all_of(m_items.begin(), m_items.end(), [&files](const Item &file) {
-        return files.contains(file.filename.c_str());
+    bool existAll = std::all_of(
+        m_items.begin(), m_items.end(), [&files](const model::Item &file) {
+            return files.contains(file.filename.c_str());
     });
 
     if(!isExist || files.isEmpty() || !existAll) {
@@ -149,9 +150,9 @@ QVariant UrlsModel::decorationData(const QModelIndex &index) const {
     }
 
     switch(m_items[index.row()].status) {
-    case ItemStatus::NullStatus: return m_grayIcon;
-    case ItemStatus::DownloadedStatus: return m_downIcon;
-    case ItemStatus::UploadedStatus: return m_upDownIcon;
+    case model::ItemStatus::NullStatus: return m_grayIcon;
+    case model::ItemStatus::DownloadedStatus: return m_downIcon;
+    case model::ItemStatus::UploadedStatus: return m_upDownIcon;
     }
 
     return QVariant{};
@@ -173,7 +174,7 @@ QVariant UrlsModel::displayData(const QModelIndex &index) const {
 }
 
 //-----------------------------------------------------------------------------
-void UrlsModel::updateItemStatus(iterator it, Item item) {
+void UrlsModel::updateItemStatus(model::iterator it, model::Item item) {
     int row = std::distance(m_items.begin(), it);
 
     it->filename = std::move(item.filename);
@@ -184,13 +185,13 @@ void UrlsModel::updateItemStatus(iterator it, Item item) {
 }
 
 //-----------------------------------------------------------------------------
-void UrlsModel::updateTaskStatus(ProcessType type) {
+void UrlsModel::updateTaskStatus(model::ProcessType type) {
     ++m_completedTasks;    
     if(m_completedTasks == m_maxThreads) {
         auto status = (
-            (type == ProcessType::DownloadProcess)
-            ? ItemStatus::DownloadedStatus
-            : ItemStatus::UploadedStatus
+            (type == model::ProcessType::DownloadProcess)
+            ? model::ItemStatus::DownloadedStatus
+            : model::ItemStatus::UploadedStatus
         );
 
         emit processComplete(
@@ -205,9 +206,9 @@ void UrlsModel::updateTaskStatus(ProcessType type) {
 
 //-----------------------------------------------------------------------------
 std::string UrlsModel::createBbCode(std::string link) {
-    constexpr char* IMAGEBAN_URL = "imageban.ru";
-    constexpr char* OUT_WORD = "out";
-    constexpr char* THUMBS_WORD = "thumbs";
+    constexpr const char* IMAGEBAN_URL = "imageban.ru";
+    constexpr const char * const OUT_WORD = "out";
+    constexpr const char * const THUMBS_WORD = "thumbs";
     constexpr size_t YEAR_COUNT = 4;
     constexpr size_t MONTH_COUNT = 2;
 
@@ -279,7 +280,7 @@ std::string UrlsModel::createBbCodeAsText(std::string link) {
 }
 
 //-----------------------------------------------------------------------------
-void UrlsModel::downloadTask(iterator begin, iterator end) {
+void UrlsModel::downloadTask(model::iterator begin, model::iterator end) {
     curl::CurlDownloader downloader;
 
     while(begin != end) {
@@ -287,7 +288,7 @@ void UrlsModel::downloadTask(iterator begin, iterator end) {
         QString filename = m_workDir.filePath(item.filename.c_str());
 
         downloader.download(item.downLink);
-        item.status = ItemStatus::DownloadedStatus;
+        item.status = model::ItemStatus::DownloadedStatus;
 
         if(isWebpImage(item.filename)) {
             WebpDecoder decoder(
@@ -303,7 +304,7 @@ void UrlsModel::downloadTask(iterator begin, iterator end) {
         std::advance(begin, 1);
     }
 
-    emit taskComplete(ProcessType::DownloadProcess);
+    emit taskComplete(model::ProcessType::DownloadProcess);
 }
 
 //-----------------------------------------------------------------------------
@@ -335,7 +336,7 @@ bool UrlsModel::startDownload() {
         }));
     } else {
         size_t count = m_items.size()/m_maxThreads;
-        iterator cur = m_items.begin();
+        model::iterator cur = m_items.begin();
         for(int ii = 0; ii < (m_maxThreads - 1); ++ii) {
             pool->start(new PoolJob([this, cur, count]() {
                 downloadTask(cur, std::next(cur, count));
@@ -347,7 +348,7 @@ bool UrlsModel::startDownload() {
         }));
     }
 
-    emit processStart(ProcessType::DownloadProcess);
+    emit processStart(model::ProcessType::DownloadProcess);
     return true;
 }
 
@@ -363,7 +364,7 @@ bool UrlsModel::startUpload(const QString &album) {
         }));
     } else {
         size_t count = m_items.size()/m_maxThreads;
-        iterator cur = m_items.begin();
+        auto cur = m_items.begin();
         for(int ii = 0; ii < (m_maxThreads - 1); ++ii) {
             pool->start(new PoolJob([this, album, cur, count]() {
                 uploadTask(album, cur, std::next(cur, count));
@@ -375,12 +376,12 @@ bool UrlsModel::startUpload(const QString &album) {
         }));
     }
 
-    emit processStart(ProcessType::UploadProcess);
+    emit processStart(model::ProcessType::UploadProcess);
     return true;
 }
 
 //-----------------------------------------------------------------------------
-void UrlsModel::uploadTask(const QString &album, iterator begin, iterator end) {
+void UrlsModel::uploadTask(const QString &album, model::iterator begin, model::iterator end) {
     Settings settings;
     imageban::ImageBan imageBan{settings.secretKey()};
 
@@ -389,14 +390,14 @@ void UrlsModel::uploadTask(const QString &album, iterator begin, iterator end) {
         QString filename = m_workDir.filePath(item.filename.c_str());
 
         auto image = imageBan.uploadImage(album.toStdString(), filename.toStdString());
-        item.status = ItemStatus::UploadedStatus;
+        item.status = model::ItemStatus::UploadedStatus;
         item.upLink = image.link;
 
         emit itemComplete(begin, item);
         std::advance(begin, 1);
     }
 
-    emit taskComplete(ProcessType::UploadProcess);
+    emit taskComplete(model::ProcessType::UploadProcess);
 }
 
 //-----------------------------------------------------------------------------

@@ -28,8 +28,8 @@ private slots:
     void downloadFiles();
     void openParams();
     void openUrls();
-    void processCompleted(ProcessType,bool);
-    void processStarted(ProcessType);
+    void processCompleted(model::ProcessType,bool);
+    void processStarted(model::ProcessType);
     void saveUrls();
     void updateState();
     void uploadFiles();
