@@ -177,7 +177,7 @@ void UrlsModel::updateItemStatus(iterator it, Item item) {
     int row = std::distance(m_items.begin(), it);
 
     it->filename = std::move(item.filename);
-    it->upLink = createBbCode(std::move(item.upLink));
+    it->upLink = createBbCodeAsText(std::move(item.upLink));
     it->status = item.status;
 
     emit dataChanged(index(row, 0), index(row, columnCount({})));
@@ -265,6 +265,17 @@ std::string UrlsModel::createBbCode(std::string link) {
     link.insert(pos, ".");
 
     return fmt::format("[URL={0}][IMG]{1}[/IMG][/URL]", url, link);
+}
+
+//-----------------------------------------------------------------------------
+std::string UrlsModel::createBbCodeAsText(std::string link) {
+    if(link.empty()) {
+        return {};
+    }
+
+    return fmt::format(
+        "[URL=https://imageban.ru][IMG]{}[/IMG][/URL]", link
+    );
 }
 
 //-----------------------------------------------------------------------------
