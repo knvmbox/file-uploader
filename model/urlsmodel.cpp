@@ -185,7 +185,7 @@ void UrlsModel::updateItemStatus(model::iterator it, model::Item item) {
 }
 
 //-----------------------------------------------------------------------------
-void UrlsModel::updateTaskStatus(model::ProcessType type) {
+void UrlsModel::updateTaskStatus(model::ProcessType type, bool) {
     ++m_completedTasks;    
     if(m_completedTasks == m_maxThreads) {
         auto status = (
@@ -283,28 +283,34 @@ std::string UrlsModel::createBbCodeAsText(std::string link) {
 void UrlsModel::downloadTask(model::iterator begin, model::iterator end) {
     curl::CurlDownloader downloader;
 
-    while(begin != end) {
-        auto item = *begin;
-        QString filename = m_workDir.filePath(item.filename.c_str());
+    try {
+        while(begin != end) {
+            auto item = *begin;
+            QString filename = m_workDir.filePath(item.filename.c_str());
 
-        downloader.download(item.downLink);
-        item.status = model::ItemStatus::DownloadedStatus;
+            downloader.download(item.downLink);
+            item.status = model::ItemStatus::DownloadedStatus;
 
-        if(isWebpImage(item.filename)) {
-            WebpDecoder decoder(
-                reinterpret_cast<const uint8_t*>(downloader.data()), downloader.size()
-            );
-            decoder.save(replaceExt(filename.toStdString(), "png"));
-            item.filename = replaceExt(item.filename, "png");
-        } else {
-            downloader.save(filename.toStdString());
+            if(isWebpImage(item.filename)) {
+                WebpDecoder decoder(
+                    reinterpret_cast<const uint8_t*>(downloader.data()), downloader.size()
+                );
+                decoder.save(replaceExt(filename.toStdString(), "png"));
+                item.filename = replaceExt(item.filename, "png");
+            } else {
+                downloader.save(filename.toStdString());
+            }
+
+            emit itemComplete(begin, item);
+            std::advance(begin, 1);
         }
 
-        emit itemComplete(begin, item);
-        std::advance(begin, 1);
+        emit taskComplete(model::ProcessType::DownloadProcess, true);
+
+    } catch(curl::curl_error &e) {
+        emit taskComplete(model::ProcessType::DownloadProcess, false);
     }
 
-    emit taskComplete(model::ProcessType::DownloadProcess);
 }
 
 //-----------------------------------------------------------------------------
@@ -385,19 +391,23 @@ void UrlsModel::uploadTask(const QString &album, model::iterator begin, model::i
     Settings settings;
     imageban::ImageBan imageBan{settings.secretKey()};
 
-    while(begin != end) {
-        auto item = *begin;
-        QString filename = m_workDir.filePath(item.filename.c_str());
+    try {
+        while(begin != end) {
+            auto item = *begin;
+            QString filename = m_workDir.filePath(item.filename.c_str());
 
-        auto image = imageBan.uploadImage(album.toStdString(), filename.toStdString());
-        item.status = model::ItemStatus::UploadedStatus;
-        item.upLink = image.link;
+            auto image = imageBan.uploadImage(album.toStdString(), filename.toStdString());
+            item.status = model::ItemStatus::UploadedStatus;
+            item.upLink = image.link;
 
-        emit itemComplete(begin, item);
-        std::advance(begin, 1);
+            emit itemComplete(begin, item);
+            std::advance(begin, 1);
+        }
+    } catch(imageban::imageban_error &e) {
+        emit taskComplete(model::ProcessType::UploadProcess, false);
     }
 
-    emit taskComplete(model::ProcessType::UploadProcess);
+    emit taskComplete(model::ProcessType::UploadProcess, true);
 }
 
 //-----------------------------------------------------------------------------

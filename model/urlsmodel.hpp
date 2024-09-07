@@ -70,11 +70,11 @@ protected:
 
 private slots:
     void updateItemStatus(model::iterator, model::Item);
-    void updateTaskStatus(model::ProcessType);
+    void updateTaskStatus(model::ProcessType, bool);
 
 signals:
     void itemComplete(model::iterator, model::Item);
-    void taskComplete(model::ProcessType);
+    void taskComplete(model::ProcessType, bool);
     void processComplete(model::ProcessType, bool);
     void processStart(model::ProcessType);
 
