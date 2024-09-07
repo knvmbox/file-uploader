@@ -6,6 +6,7 @@
 #include <QColor>
 #include <QIcon>
 #include <QProcess>
+#include <QRunnable>
 #include <QTextStream>
 #include <QThread>
 #include <QThreadPool>
@@ -25,6 +26,19 @@ static constexpr int statusRow = 0;
 static constexpr int filenameRow = 1;
 static constexpr int downUrlRow = 2;
 static constexpr int upUrlRow = 3;
+
+///////////////////////////////////////////////////////////////////////////////
+template <typename F>
+struct PoolJob : public QRunnable {
+    PoolJob(F f) : m_f{std::move(f)} {
+    }
+
+    void run() override {
+        std::invoke(m_f);
+    }
+
+    F m_f;
+};
 
 //-----------------------------------------------------------------------------
 UrlsModel::UrlsModel(QObject *parent) :
@@ -316,21 +330,21 @@ bool UrlsModel::startDownload() {
     m_completedTasks = 0;
 
     if((m_items.size() < m_maxThreads) || (m_maxThreads == 1)) {
-        pool->start([this](){
+        pool->start(new PoolJob([this](){
             downloadTask(m_items.begin(), m_items.end());
-        });
+        }));
     } else {
         size_t count = m_items.size()/m_maxThreads;
         iterator cur = m_items.begin();
         for(int ii = 0; ii < (m_maxThreads - 1); ++ii) {
-            pool->start([this, cur, count]() {
+            pool->start(new PoolJob([this, cur, count]() {
                 downloadTask(cur, std::next(cur, count));
-            });
+            }));
             std::advance(cur, count);
         }
-        pool->start([this, cur](){
+        pool->start(new PoolJob([this, cur](){
             downloadTask(cur, m_items.end());
-        });
+        }));
     }
 
     emit processStart(ProcessType::DownloadProcess);
@@ -344,21 +358,21 @@ bool UrlsModel::startUpload(const QString &album) {
     m_completedTasks = 0;
 
     if((m_items.size() < m_maxThreads) || (m_maxThreads == 1)) {
-        pool->start([this, album](){
+        pool->start(new PoolJob([this, album](){
             uploadTask(album, m_items.begin(), m_items.end());
-        });
+        }));
     } else {
         size_t count = m_items.size()/m_maxThreads;
         iterator cur = m_items.begin();
         for(int ii = 0; ii < (m_maxThreads - 1); ++ii) {
-            pool->start([this, album, cur, count]() {
+            pool->start(new PoolJob([this, album, cur, count]() {
                 uploadTask(album, cur, std::next(cur, count));
-            });
+            }));
             std::advance(cur, count);
         }
-        pool->start([this, album, cur](){
+        pool->start(new PoolJob([this, album, cur](){
             uploadTask(album, cur, m_items.end());
-        });
+        }));
     }
 
     emit processStart(ProcessType::UploadProcess);

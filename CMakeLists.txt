@@ -143,6 +143,7 @@ target_link_libraries(
     imageioutil
     webp
     sharpyuv
+    pthread
 )
 
 set_target_properties(file-uploader PROPERTIES
