@@ -5,6 +5,7 @@
 
 #include <QColor>
 #include <QIcon>
+#include <QImage>
 #include <QProcess>
 #include <QRunnable>
 #include <QTextStream>
@@ -28,6 +29,9 @@ static constexpr int statusRow = 0;
 static constexpr int filenameRow = 1;
 static constexpr int downUrlRow = 2;
 static constexpr int upUrlRow = 3;
+
+static const char* THUMBS_DIR = "thumbs";
+
 
 ///////////////////////////////////////////////////////////////////////////////
 template <typename F>
@@ -80,6 +84,14 @@ bool UrlsModel::downloadImages(const QString &dir) {
     }
 
     m_workDir = std::move(workDir);
+    bool isOk = m_workDir.mkdir(THUMBS_DIR);
+    if(!isOk) {
+        return false;
+    }
+
+    m_thumbsDir = m_workDir;
+    m_thumbsDir.cd(THUMBS_DIR);
+
     return startDownload();
 }
 
@@ -292,6 +304,7 @@ std::string UrlsModel::createBbCodeAsText(std::string link) {
 //-----------------------------------------------------------------------------
 void UrlsModel::downloadTask(model::iterator begin, model::iterator end) {
     curl::CurlDownloader downloader;
+    Settings settings;
 
     try {
         while(begin != end) {
@@ -310,6 +323,8 @@ void UrlsModel::downloadTask(model::iterator begin, model::iterator end) {
             } else {
                 downloader.save(filename.toStdString());
             }
+
+            makeThumb(filename.toStdString(), settings.thumbSize());
 
             emit itemComplete(begin, item);
             std::advance(begin, 1);
@@ -330,6 +345,42 @@ bool UrlsModel::isWebpImage(const std::string &filename) {
     std::transform(stem.begin(), stem.end(), stem.begin(), ::toupper);
 
     return (stem == ".WEBP");
+}
+
+//-----------------------------------------------------------------------------
+bool UrlsModel::makeThumb(const std::string &item, size_t size_) {
+    QImage image{item.c_str()};
+
+    int size = static_cast<int>(size_);
+    int width = image.width();
+    int height = image.height();
+
+    if(width < size || height < size) {
+        QFile file{item.c_str()};
+        return file.copy(makeThrumbFilename(item, THUMBS_DIR).c_str());
+    }
+
+    QImage thrumbImage;
+    if(width > height) {
+        thrumbImage = image.scaledToWidth(size);
+    } else {
+        thrumbImage = image.scaledToHeight(size);
+    }
+
+    thrumbImage.save(makeThrumbFilename(item, THUMBS_DIR).c_str());
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+std::string UrlsModel::makeThrumbFilename(
+    const std::string &filename,
+    const std::string &thrumbDir
+) {
+    std::filesystem::path path = filename;
+    std::filesystem::path thrumbPath = path.parent_path()/thrumbDir/path.filename();
+
+    return thrumbPath;
 }
 
 //-----------------------------------------------------------------------------

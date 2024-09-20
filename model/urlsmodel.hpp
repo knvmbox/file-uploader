@@ -90,6 +90,8 @@ private:
     std::string createBbCodeAsText(std::string);
     void downloadTask(model::iterator, model::iterator);
     bool isWebpImage(const std::string &filename);
+    bool makeThumb(const std::string &, size_t);
+    std::string makeThrumbFilename(const std::string&, const std::string &thrumbDir);
     std::string replaceExt(const std::string &filename, const std::string &ext);
     bool startDownload();
     bool startUpload(const QString &album);
@@ -101,6 +103,7 @@ private:
     std::shared_ptr<common::Logger> m_logger;
     std::vector<model::Item> m_items;
     QDir m_workDir;
+    QDir m_thumbsDir;
 
     size_t m_completedTasks;
     size_t m_maxThreads;

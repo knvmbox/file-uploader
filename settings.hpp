@@ -13,6 +13,10 @@ public:
 
     std::string secretKey() const;
     void setSecretKey(const std::string&);
+    void setThrumbSize(size_t);
+    void setThrumbSecretKey(const std::string&);
+    std::string thrumbSecretKey() const;
+    size_t thumbSize() const;
 
 private:
     QSettings m_settings;
