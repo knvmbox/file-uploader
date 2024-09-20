@@ -357,7 +357,7 @@ bool UrlsModel::makeThumb(const std::string &item, size_t size_) {
 
     if(width < size || height < size) {
         QFile file{item.c_str()};
-        return file.copy(makeThrumbFilename(item, THUMBS_DIR).c_str());
+        return file.copy(makeThumbFilename(item, THUMBS_DIR).c_str());
     }
 
     QImage thrumbImage;
@@ -367,20 +367,18 @@ bool UrlsModel::makeThumb(const std::string &item, size_t size_) {
         thrumbImage = image.scaledToHeight(size);
     }
 
-    thrumbImage.save(makeThrumbFilename(item, THUMBS_DIR).c_str());
+    thrumbImage.save(makeThumbFilename(item, THUMBS_DIR).c_str());
 
     return true;
 }
 
 //-----------------------------------------------------------------------------
-std::string UrlsModel::makeThrumbFilename(
+std::string UrlsModel::makeThumbFilename(
     const std::string &filename,
-    const std::string &thrumbDir
+    const std::string &thumbDir
 ) {
     std::filesystem::path path = filename;
-    std::filesystem::path thrumbPath = path.parent_path()/thrumbDir/path.filename();
-
-    return thrumbPath;
+    return {path.parent_path()/thumbDir/path.filename()};
 }
 
 //-----------------------------------------------------------------------------

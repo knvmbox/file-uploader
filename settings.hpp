@@ -13,9 +13,9 @@ public:
 
     std::string secretKey() const;
     void setSecretKey(const std::string&);
-    void setThrumbSize(size_t);
-    void setThrumbSecretKey(const std::string&);
-    std::string thrumbSecretKey() const;
+    void setThumbSize(size_t);
+    void setThumbSecretKey(const std::string&);
+    std::string thumbSecretKey() const;
     size_t thumbSize() const;
 
 private:

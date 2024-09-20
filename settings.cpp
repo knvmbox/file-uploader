@@ -17,18 +17,18 @@ void Settings::setSecretKey(const std::string &secret) {
 }
 
 //-----------------------------------------------------------------------------
-void Settings::setThrumbSize(size_t size) {
+void Settings::setThumbSize(size_t size) {
     m_settings.setValue("thumbs/size", static_cast<unsigned>(size));
 }
 
 //-----------------------------------------------------------------------------
-void Settings::setThrumbSecretKey(const std::string &key) {
-    m_settings.setValue("imageban/thrumbsecretkey", key.c_str());
+void Settings::setThumbSecretKey(const std::string &key) {
+    m_settings.setValue("imageban/thumbsecretkey", key.c_str());
 }
 
 //-----------------------------------------------------------------------------
-std::string Settings::thrumbSecretKey() const {
-    return m_settings.value("imageban/thrumbsecretkey").toString().toStdString();
+std::string Settings::thumbSecretKey() const {
+    return m_settings.value("imageban/thumbsecretkey").toString().toStdString();
 }
 
 //-----------------------------------------------------------------------------

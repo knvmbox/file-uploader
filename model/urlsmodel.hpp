@@ -91,7 +91,7 @@ private:
     void downloadTask(model::iterator, model::iterator);
     bool isWebpImage(const std::string &filename);
     bool makeThumb(const std::string &, size_t);
-    std::string makeThrumbFilename(const std::string&, const std::string &thrumbDir);
+    std::string makeThumbFilename(const std::string&, const std::string &thrumbDir);
     std::string replaceExt(const std::string &filename, const std::string &ext);
     bool startDownload();
     bool startUpload(const QString &album);
