@@ -10,12 +10,18 @@ ParametersDlg::ParametersDlg(QWidget *parent) :
     ui->setupUi(this);
 
     ui->secretKeyEdit->setText(m_settings.secretKey().c_str());
+    ui->thumbSecretKeyEdit->setText(m_settings.thumbSecretKey().c_str());
+
+    ui->thumbsSizeBox->setValue(m_settings.thumbSize());
 }
 
 //-----------------------------------------------------------------------------
 ParametersDlg::~ParametersDlg()
 {
     m_settings.setSecretKey(ui->secretKeyEdit->text().toStdString());
+    m_settings.setThumbSecretKey(ui->thumbSecretKeyEdit->text().toStdString());
+
+    m_settings.setThumbSize(ui->thumbsSizeBox->value());
 
     delete ui;
 }
