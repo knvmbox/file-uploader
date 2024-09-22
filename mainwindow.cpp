@@ -132,15 +132,18 @@ void MainWindow::updateState() {
 //-----------------------------------------------------------------------------
 void MainWindow::uploadFiles() {
     Settings settings;
-    UploadImagesDlg dlg(settings.secretKey(), this);
+    UploadImagesDlg dlg(settings.secretKey(), settings.thumbSecretKey(), this);
 
     auto res = dlg.exec();
     if(res == QDialog::Rejected) {
         return;
     }
 
-    auto album = dlg.album();
-    auto isUploaded = m_urlsModel->uploadImages(album.id.c_str());
+    auto albums = dlg.album();
+    auto isUploaded = m_urlsModel->uploadImages(
+        albums.first.id.c_str(),
+        albums.second.id.c_str()
+    );
     if(!isUploaded) {
         m_logger->error("Ошибка при запуске выгрузки файлов");
     }

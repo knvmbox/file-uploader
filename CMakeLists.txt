@@ -45,6 +45,7 @@ set(PROJECT_HEADERS
     settings.hpp
     uploadimagesdlg.hpp
     utils/curlutils.hpp
+    utils/imageban.hpp
     utils/webpdecoder.hpp
     widgets/fileselector.hpp
 )

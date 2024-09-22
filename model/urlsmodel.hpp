@@ -34,6 +34,8 @@ struct Item {
     std::string filename;
     std::string downLink;
     std::string upLink;
+    std::string thumbLink;
+    std::string bbcode;
     ItemStatus status;
 };
 
@@ -54,7 +56,7 @@ public:
     bool downloadImages(const QString&);
     bool openUrlsFile(const QString&);
     bool saveUrlsFile(const QString&);
-    bool uploadImages(const QString&);
+    bool uploadImages(const QString&, const QString&);
 
 public:
     bool canUpload() {
@@ -86,7 +88,8 @@ private:
     }
 
 private:
-    std::string createBbCode(std::string);
+    bool checkFiles(const QDir&);
+    std::string createBbCode(std::string, std::string);
     std::string createBbCodeAsText(std::string);
     void downloadTask(model::iterator, model::iterator);
     bool isWebpImage(const std::string &filename);
@@ -94,8 +97,8 @@ private:
     std::string makeThumbFilename(const std::string&, const std::string &thrumbDir);
     std::string replaceExt(const std::string &filename, const std::string &ext);
     bool startDownload();
-    bool startUpload(const QString &album);
-    void uploadTask(const QString&, model::iterator, model::iterator);
+    bool startUpload(const QString &albumId, const QString &thumbId);
+    void uploadTask(const QString&, const QString&, model::iterator, model::iterator);
 
     std::string uniqueFilename(const std::unordered_set<std::string>&, const std::string&);
 

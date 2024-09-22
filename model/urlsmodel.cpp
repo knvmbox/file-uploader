@@ -120,7 +120,7 @@ bool UrlsModel::openUrlsFile(const QString &filename) {
         }
 
         m_items.push_back(
-            {filename, line.toStdString(), "", model::ItemStatus::NullStatus}
+            {filename, line.toStdString(), "", "", "", model::ItemStatus::NullStatus}
         );
         filenamesSet.insert(filename);
     }
@@ -137,26 +137,22 @@ bool UrlsModel::saveUrlsFile(const QString &filename) {
 
     QTextStream in(&urlsFile);
     for(const auto &item : m_items) {
-        in <<item.upLink.c_str() <<"\n";
+        in <<item.bbcode.c_str() <<"\n";
     }
 
     return true;
 }
 
 //-----------------------------------------------------------------------------
-bool UrlsModel::uploadImages(const QString &album) {
-    bool isExist = m_workDir.exists();
-    auto files = m_workDir.entryList(QDir::NoDotAndDotDot | QDir::Files);
-    bool existAll = std::all_of(
-        m_items.begin(), m_items.end(), [&files](const model::Item &file) {
-            return files.contains(file.filename.c_str());
-    });
+bool UrlsModel::uploadImages(const QString &albumId, const QString &thumbId) {
+    auto isOkWorkDir = checkFiles(m_workDir);
+    auto isOkThumbDir = checkFiles(m_thumbsDir);
 
-    if(!isExist || files.isEmpty() || !existAll) {
+    if(!isOkWorkDir || !isOkThumbDir) {
         return false;
     }
 
-    return startUpload(album);
+    return startUpload(albumId, thumbId);
 }
 
 //-----------------------------------------------------------------------------
@@ -186,7 +182,7 @@ QVariant UrlsModel::displayData(const QModelIndex &index) const {
     switch(index.column()) {
     case filenameRow: return m_items[index.row()].filename.c_str();
     case downUrlRow: return m_items[index.row()].downLink.c_str();
-    case upUrlRow: return m_items[index.row()].upLink.c_str();
+    case upUrlRow: return m_items[index.row()].bbcode.c_str();
     }
 
     return QVariant{};
@@ -197,7 +193,9 @@ void UrlsModel::updateItemStatus(model::iterator it, model::Item item) {
     int row = std::distance(m_items.begin(), it);
 
     it->filename = std::move(item.filename);
-    it->upLink = createBbCodeAsText(std::move(item.upLink));
+    it->upLink = item.upLink;
+    it->thumbLink = item.thumbLink;
+    it->bbcode = createBbCode(std::move(item.upLink), std::move(item.thumbLink));
     it->status = item.status;
 
     emit dataChanged(index(row, 0), index(row, columnCount({})));
@@ -227,7 +225,19 @@ void UrlsModel::updateTaskStatus(model::ProcessType type) {
 }
 
 //-----------------------------------------------------------------------------
-std::string UrlsModel::createBbCode(std::string link) {
+bool UrlsModel::checkFiles(const QDir &dir) {
+    bool isDirExist = dir.exists();
+    auto files = dir.entryList(QDir::NoDotAndDotDot | QDir::Files);
+    bool existFiles = std::all_of(
+        m_items.begin(), m_items.end(), [&files](const model::Item &file) {
+            return files.contains(file.filename.c_str());
+    });
+
+    return (isDirExist && !files.isEmpty() && existFiles);
+}
+
+//-----------------------------------------------------------------------------
+std::string UrlsModel::createBbCode(std::string link, std::string thumb) {
     constexpr const char* IMAGEBAN_URL = "imageban.ru";
     constexpr const char * const OUT_WORD = "out";
     constexpr const char * const THUMBS_WORD = "thumbs";
@@ -287,7 +297,7 @@ std::string UrlsModel::createBbCode(std::string link) {
     link.erase(pos, 1);
     link.insert(pos, ".");
 
-    return fmt::format("[URL={0}][IMG]{1}[/IMG][/URL]", url, link);
+    return fmt::format("[URL={0}][IMG]{1}[/IMG][/URL]", url, thumb);
 }
 
 //-----------------------------------------------------------------------------
@@ -417,26 +427,26 @@ bool UrlsModel::startDownload() {
 }
 
 //-----------------------------------------------------------------------------
-bool UrlsModel::startUpload(const QString &album) {
+bool UrlsModel::startUpload(const QString &albumId, const QString &thumbId) {
     auto pool = QThreadPool::globalInstance();
 
     m_completedTasks = 0;
 
     if((m_items.size() < m_maxThreads) || (m_maxThreads == 1)) {
-        pool->start(new PoolJob([this, album](){
-            uploadTask(album, m_items.begin(), m_items.end());
+        pool->start(new PoolJob([this, albumId, thumbId](){
+            uploadTask(albumId, thumbId, m_items.begin(), m_items.end());
         }));
     } else {
         size_t count = m_items.size()/m_maxThreads;
         auto cur = m_items.begin();
         for(int ii = 0; ii < (m_maxThreads - 1); ++ii) {
-            pool->start(new PoolJob([this, album, cur, count]() {
-                uploadTask(album, cur, std::next(cur, count));
+            pool->start(new PoolJob([this, albumId, thumbId, cur, count]() {
+                uploadTask(albumId, thumbId, cur, std::next(cur, count));
             }));
             std::advance(cur, count);
         }
-        pool->start(new PoolJob([this, album, cur](){
-            uploadTask(album, cur, m_items.end());
+        pool->start(new PoolJob([this, albumId, thumbId, cur](){
+            uploadTask(albumId, thumbId, cur, m_items.end());
         }));
     }
 
@@ -445,18 +455,25 @@ bool UrlsModel::startUpload(const QString &album) {
 }
 
 //-----------------------------------------------------------------------------
-void UrlsModel::uploadTask(const QString &album, model::iterator begin, model::iterator end) {
+void UrlsModel::uploadTask(
+    const QString &album, const QString &thumbAlbum,
+    model::iterator begin, model::iterator end) {
     Settings settings;
     imageban::ImageBan imageBan{settings.secretKey()};
+    imageban::ImageBan thumbBan{settings.thumbSecretKey()};
 
     try {
         while(begin != end) {
             auto item = *begin;
             QString filename = m_workDir.filePath(item.filename.c_str());
+            QString thumbfile = m_thumbsDir.filePath(item.filename.c_str());
 
             auto image = imageBan.uploadImage(album.toStdString(), filename.toStdString());
+            auto thumb = thumbBan.uploadImage(thumbAlbum.toStdString(), thumbfile.toStdString());
+
             item.status = model::ItemStatus::UploadedStatus;
             item.upLink = image.link;
+            item.thumbLink = thumb.link;
 
             emit itemComplete(begin, item);
             std::advance(begin, 1);

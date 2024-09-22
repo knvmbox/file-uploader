@@ -2,8 +2,12 @@
 #define UPLOADIMAGESDLG_HPP
 
 #include <string>
+#include <utility>
 
 #include <QDialog>
+#include <QStringList>
+
+#include <common/logger/logger.hpp>
 
 #include "settings.hpp"
 #include "utils/imageban.hpp"
@@ -18,20 +22,26 @@ class UploadImagesDlg : public QDialog
     Q_OBJECT
 
 public:
-    explicit UploadImagesDlg(std::string secretKey, QWidget *parent = nullptr);
+    explicit UploadImagesDlg(
+        std::string secretKey,
+        std::string thumbSecretKey,
+        QWidget *parent = nullptr
+    );
     ~UploadImagesDlg();
 
-    imageban::album_t album();
+    std::pair<imageban::album_t, imageban::album_t> album();
 
 private:
     void addAlbum(const QString&);
-    void albumsSelected(const QString&, const QString&);
+    void albumsSelected(const QString&, const QStringList&);
     void fillAlbumsBox();
     void showNewAlbumsWidgets(bool);
 
 private:
     Ui::UploadImagesDlg *ui;
-    imageban::ImageBan m_imageBan;
+    std::shared_ptr<common::Logger> m_logger;
+    imageban::ImageBan m_imgImageBan;
+    imageban::ImageBan m_thumbImageBan;
 };
 
 #endif // UPLOADIMAGESDLG_HPP

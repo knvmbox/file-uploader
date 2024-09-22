@@ -80,7 +80,8 @@ public:
         addSecret(request);
         request.download("https://api.imageban.ru/v1/album");
 
-        json doc = json::parse(request.data());
+        auto data = request.data();
+        json doc = json::parse(data);
         if(doc.contains("error")) {
             throw_error(std::move(doc));
         }

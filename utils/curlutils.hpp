@@ -1,6 +1,7 @@
 #ifndef CURLUTILS_HPP
 #define CURLUTILS_HPP
 
+#include <algorithm>
 #include <fstream>
 #include <memory>
 #include <stdexcept>
