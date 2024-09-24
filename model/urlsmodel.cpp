@@ -195,7 +195,7 @@ void UrlsModel::updateItemStatus(model::iterator it, model::Item item) {
     it->filename = std::move(item.filename);
     it->upLink = item.upLink;
     it->thumbLink = item.thumbLink;
-    it->bbcode = createBbCode(std::move(item.upLink), std::move(item.thumbLink));
+    it->bbcode = createBbCodeAsText(std::move(item.thumbLink));
     it->status = item.status;
 
     emit dataChanged(index(row, 0), index(row, columnCount({})));
@@ -363,19 +363,14 @@ bool UrlsModel::makeThumb(const std::string &item, size_t size_) {
 
     int size = static_cast<int>(size_);
     int width = image.width();
-    int height = image.height();
 
-    if(width < size || height < size) {
+    if(width < size) {
         QFile file{item.c_str()};
         return file.copy(makeThumbFilename(item, THUMBS_DIR).c_str());
     }
 
     QImage thrumbImage;
-    if(width > height) {
-        thrumbImage = image.scaledToWidth(size);
-    } else {
-        thrumbImage = image.scaledToHeight(size);
-    }
+    thrumbImage = image.scaledToWidth(size);
 
     thrumbImage.save(makeThumbFilename(item, THUMBS_DIR).c_str());
 
