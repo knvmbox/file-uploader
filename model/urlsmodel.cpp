@@ -55,9 +55,9 @@ struct PoolJob : public QRunnable {
 //-----------------------------------------------------------------------------
 UrlsModel::UrlsModel(QObject *parent) :
     AbstractModel{parent},
-    m_logger{common::LoggerFactory::instance()},
-    m_completedTasks{0},
     m_maxThreads{static_cast<size_t>(QThread::idealThreadCount())},
+    m_logger{common::LoggerFactory::instance()},
+    m_startedTasks{0},
     m_downIcon{":/img/down.png"},
     m_upDownIcon{":/img/up-and-down.png"},
     m_grayIcon{":/img/gray-up-and-down.png"} {
@@ -208,11 +208,9 @@ void UrlsModel::updateItemStatus(model::iterator it, model::Item item) {
 
 //-----------------------------------------------------------------------------
 void UrlsModel::updateTaskStatus(model::ProcessType type) {
-    ++m_completedTasks;
+    common::log::info(m_logger, "Завершена задача из", m_startedTasks);
 
-    common::log::info(m_logger, "Завершена задача", m_completedTasks, "из", m_maxThreads);
-
-    if(m_completedTasks == m_maxThreads) {
+    if(!--m_startedTasks) {
         auto status = (
             (type == model::ProcessType::DownloadProcess)
             ? model::ItemStatus::DownloadedStatus
@@ -225,7 +223,6 @@ void UrlsModel::updateTaskStatus(model::ProcessType type) {
                 return (item.status == status);
             })
         );
-        m_completedTasks = 0;
     }
 }
 

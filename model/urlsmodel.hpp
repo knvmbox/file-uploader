@@ -89,11 +89,12 @@ private:
     std::string uniqueFilename(const std::unordered_set<std::string>&, const std::string&);
 
 private:
+    const size_t m_maxThreads;
+
     std::shared_ptr<common::Logger> m_logger;
     std::vector<model::Item> m_items;
 
-    size_t m_completedTasks;
-    size_t m_maxThreads;
+    size_t m_startedTasks;
 
     QIcon m_downIcon;
     QIcon m_upDownIcon;
