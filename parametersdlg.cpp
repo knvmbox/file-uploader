@@ -1,4 +1,6 @@
+#include "model/imagebanconfigviewmodel.hpp"
 #include "parametersdlg.hpp"
+#include "settings.hpp"
 #include "ui_parametersdlg.h"
 
 
@@ -9,19 +11,27 @@ ParametersDlg::ParametersDlg(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    ui->secretKeyEdit->setText(m_settings.secretKey().c_str());
-    ui->thumbSecretKeyEdit->setText(m_settings.thumbSecretKey().c_str());
+    connect(ui->closeBtn, &QPushButton::clicked, [this](bool){
+        accept();
+    });
+    connect(ui->paramsList, &QListWidget::currentRowChanged, [this](int row){
+        ui->stackedWidget->setCurrentIndex(row);
+    });
 
-    ui->thumbsSizeBox->setValue(m_settings.thumbSize());
+    Settings settings;
+    ui->imageSizeBox->setValue(settings.imageSize());
+
+    ui->imagebanListView->setModel(new ImagebanConfigViewModel{this});
+    ui->imagebanListView->verticalHeader()->setDefaultSectionSize(24);
+    ui->imagebanListView->horizontalHeader()->resizeSection(0, 250);
+    ui->imagebanListView->horizontalHeader()->setStretchLastSection(true);
 }
 
 //-----------------------------------------------------------------------------
 ParametersDlg::~ParametersDlg()
 {
-    m_settings.setSecretKey(ui->secretKeyEdit->text().toStdString());
-    m_settings.setThumbSecretKey(ui->thumbSecretKeyEdit->text().toStdString());
-
-    m_settings.setThumbSize(ui->thumbsSizeBox->value());
+    Settings settings;
+    settings.setImageSize(ui->imageSizeBox->value());
 
     delete ui;
 }

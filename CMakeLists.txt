@@ -19,6 +19,7 @@ set(PROJECT_SOURCES
     lib/common/logger/loggerfactory.cpp
     lib/common/qtwidgets/plaintextlogger.cpp
     model/abstractmodel.cpp
+    model/imagebanconfigviewmodel.cpp
     model/urlsmodel.cpp
     main.cpp
     mainwindow.cpp
@@ -39,6 +40,7 @@ set(PROJECT_HEADERS
     lib/common/logger/loggerfactory.hpp
     lib/common/queue.hpp
     model/abstractmodel.hpp
+    model/imagebanconfigviewmodel.hpp
     model/urlsmodel.hpp
     mainwindow.hpp
     parametersdlg.hpp

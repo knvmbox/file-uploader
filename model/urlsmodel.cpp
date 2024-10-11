@@ -334,7 +334,7 @@ void UrlsModel::downloadTask(model::iterator begin, model::iterator end) {
                 downloader.save(filename.toStdString());
             }
 
-            makeThumb(filename.toStdString(), settings.thumbSize());
+            makeThumb(filename.toStdString(), settings.imageSize());
 
             emit itemComplete(begin, item);
             std::advance(begin, 1);
@@ -454,8 +454,7 @@ void UrlsModel::uploadTask(
     const QString &album, const QString &thumbAlbum,
     model::iterator begin, model::iterator end) {
     Settings settings;
-    imageban::ImageBan imageBan{settings.secretKey()};
-    imageban::ImageBan thumbBan{settings.thumbSecretKey()};
+    imageban::ImageBan imageBan{settings.secrets().at(0).key};
 
     try {
         while(begin != end) {
@@ -464,11 +463,9 @@ void UrlsModel::uploadTask(
             QString thumbfile = m_thumbsDir.filePath(item.filename.c_str());
 
             auto image = imageBan.uploadImage(album.toStdString(), filename.toStdString());
-            auto thumb = thumbBan.uploadImage(thumbAlbum.toStdString(), thumbfile.toStdString());
 
             item.status = model::ItemStatus::UploadedStatus;
             item.upLink = image.link;
-            item.thumbLink = thumb.link;
 
             emit itemComplete(begin, item);
             std::advance(begin, 1);

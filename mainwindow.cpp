@@ -132,7 +132,7 @@ void MainWindow::updateState() {
 //-----------------------------------------------------------------------------
 void MainWindow::uploadFiles() {
     Settings settings;
-    UploadImagesDlg dlg(settings.secretKey(), settings.thumbSecretKey(), this);
+    UploadImagesDlg dlg(settings.secrets().at(0).key, "", this);
 
     auto res = dlg.exec();
     if(res == QDialog::Rejected) {

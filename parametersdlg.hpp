@@ -3,8 +3,6 @@
 
 #include <QDialog>
 
-#include "settings.hpp"
-
 
 namespace Ui {
 class ParametersDlg;
@@ -20,7 +18,6 @@ public:
 
 private:
     Ui::ParametersDlg *ui;
-    Settings m_settings;
 };
 
 #endif // PARAMETERSDLG_HPP
