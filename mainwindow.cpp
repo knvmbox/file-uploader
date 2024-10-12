@@ -20,8 +20,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     common::LoggerFactory::setupLogger(new common::PlainTextLogger{ui->loggerEdit});
 
-    ui->dirSelector->setMode(FileSelector::OpenDir);
-
     ui->urlsView->setModel(m_urlsModel.get());
     ui->urlsView->horizontalHeader()->resizeSection(0, 16);
     ui->urlsView->horizontalHeader()->resizeSection(1, 350);
@@ -32,9 +30,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->exportUrlsAction, SIGNAL(triggered(bool)), this, SLOT(saveUrls()));
     connect(ui->paramsAction, SIGNAL(triggered(bool)), this, SLOT(openParams()));
 
-    connect(ui->dirSelector, SIGNAL(fileSelected(const QString&)), this, SLOT(updateState()));
-    connect(ui->downloadBtn, SIGNAL(clicked(bool)), this, SLOT(downloadFiles()));
-    connect(ui->uploadBtn, SIGNAL(clicked(bool)), this, SLOT(uploadFiles()));
+    connect(ui->doWorkBtn, SIGNAL(clicked(bool)), this, SLOT(doWork()));
 
     connect(m_urlsModel.get(), &UrlsModel::processComplete, this, &MainWindow::processCompleted);
     connect(m_urlsModel.get(), &UrlsModel::processStart, this, &MainWindow::processStarted);
@@ -49,9 +45,7 @@ MainWindow::~MainWindow()
 //-----------------------------------------------------------------------------
 void MainWindow::lockUi(bool state) {
     ui->openUrlsAction->setDisabled(state);
-    ui->downloadBtn->setDisabled(state);
-    ui->dirSelector->setDisabled(state);
-    ui->uploadBtn->setDisabled(state);
+    ui->doWorkBtn->setDisabled(state);
 }
 
 //-----------------------------------------------------------------------------
@@ -76,11 +70,30 @@ void MainWindow::processCompleted(model::ProcessType type, bool status) {
 }
 
 //-----------------------------------------------------------------------------
-void MainWindow::downloadFiles() {
+void MainWindow::doWork() {
+    Settings settings;
+    UploadImagesDlg dlg;
+
+    auto res = dlg.exec();
+    if(res == QDialog::Rejected) {
+        return;
+    }
+
+    auto uploadParams = dlg.uploadParams();
+    auto isUploaded = m_urlsModel->uploadImages(
+        std::move(uploadParams)
+    );
+
+    if(!isUploaded) {
+        m_logger->error("Ошибка при запуске выгрузки файлов");
+    }
+
+    /*
     bool res = m_urlsModel->downloadImages(ui->dirSelector->filename());
     if(!res) {
         m_logger->error("Ошибка при запуске загрузки файлов");
     }
+    */
 }
 
 //-----------------------------------------------------------------------------
@@ -124,27 +137,6 @@ void MainWindow::saveUrls() {
 
 //-----------------------------------------------------------------------------
 void MainWindow::updateState() {
-    bool state = (m_urlsModel->rowCount() == 0) || ui->dirSelector->filename().isEmpty();
-    ui->downloadBtn->setDisabled(state);
-    ui->uploadBtn->setEnabled(m_urlsModel->canUpload());
-}
-
-//-----------------------------------------------------------------------------
-void MainWindow::uploadFiles() {
-    Settings settings;
-    UploadImagesDlg dlg(settings.secrets().at(0).key, "", this);
-
-    auto res = dlg.exec();
-    if(res == QDialog::Rejected) {
-        return;
-    }
-
-    auto albums = dlg.album();
-    auto isUploaded = m_urlsModel->uploadImages(
-        albums.first.id.c_str(),
-        albums.second.id.c_str()
-    );
-    if(!isUploaded) {
-        m_logger->error("Ошибка при запуске выгрузки файлов");
-    }
+    bool state = (m_urlsModel->rowCount() == 0);
+    ui->doWorkBtn->setDisabled(state);
 }

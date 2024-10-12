@@ -26,14 +26,13 @@ private:
     void lockUi(bool);
 
 private slots:
-    void downloadFiles();
+    void doWork();
     void openParams();
     void openUrls();
     void processCompleted(model::ProcessType,bool);
     void processStarted(model::ProcessType);
     void saveUrls();
     void updateState();
-    void uploadFiles();
 
 private:
     Ui::MainWindow *ui;

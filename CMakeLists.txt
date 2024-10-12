@@ -26,6 +26,7 @@ set(PROJECT_SOURCES
     parametersdlg.cpp
     settings.cpp
     uploadimagesdlg.cpp
+    utils/commonutils.cpp
     widgets/fileselector.cpp
 
     mainwindow.ui
@@ -46,6 +47,7 @@ set(PROJECT_HEADERS
     parametersdlg.hpp
     settings.hpp
     uploadimagesdlg.hpp
+    utils/commonutils.hpp
     utils/curlutils.hpp
     utils/imageban.hpp
     utils/webpdecoder.hpp

@@ -15,6 +15,7 @@
 #include <common/logger/logger.hpp>
 
 #include "abstractmodel.hpp"
+#include "types/uploadparams.hpp"
 #include "utils/imageban.hpp"
 
 
@@ -56,7 +57,7 @@ public:
     bool downloadImages(const QString&);
     bool openUrlsFile(const QString&);
     bool saveUrlsFile(const QString&);
-    bool uploadImages(const QString&, const QString&);
+    bool uploadImages(params::UploadParams);
 
 public:
     bool canUpload() {
@@ -105,8 +106,6 @@ private:
 private:
     std::shared_ptr<common::Logger> m_logger;
     std::vector<model::Item> m_items;
-    QDir m_workDir;
-    QDir m_thumbsDir;
 
     size_t m_completedTasks;
     size_t m_maxThreads;

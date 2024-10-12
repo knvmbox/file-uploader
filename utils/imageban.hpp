@@ -8,6 +8,7 @@
 #include <nlohmann/json.hpp>
 
 #include "curlutils.hpp"
+#include "types/imagebandef.hpp"
 
 
 namespace imageban {
@@ -19,21 +20,6 @@ struct imageban_error : public std::runtime_error {
 
     imageban_error(const std::string &what) : std::runtime_error(what) {
     }
-};
-
-///////////////////////////////////////////////////////////////////////////////
-struct album_t {
-    std::string id;
-    std::string name;
-};
-
-///////////////////////////////////////////////////////////////////////////////
-struct image_t {
-    std::string id;
-    std::string album_id;
-    std::string name;
-    std::string image_name;
-    std::string link;
 };
 
 ///////////////////////////////////////////////////////////////////////////////

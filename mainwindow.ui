@@ -53,9 +53,6 @@
           </widget>
          </item>
          <item>
-          <widget class="FileSelector" name="dirSelector" native="true"/>
-         </item>
-         <item>
           <layout class="QHBoxLayout" name="horizontalLayout">
            <property name="topMargin">
             <number>0</number>
@@ -74,7 +71,7 @@
             </spacer>
            </item>
            <item>
-            <widget class="QPushButton" name="downloadBtn">
+            <widget class="QPushButton" name="doWorkBtn">
              <property name="enabled">
               <bool>false</bool>
              </property>
@@ -84,20 +81,6 @@
              <property name="icon">
               <iconset resource="file-uploader.qrc">
                <normaloff>:/img/download.png</normaloff>:/img/download.png</iconset>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="uploadBtn">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
-             <property name="text">
-              <string>Выгрузить</string>
-             </property>
-             <property name="icon">
-              <iconset resource="file-uploader.qrc">
-               <normaloff>:/img/upload.png</normaloff>:/img/upload.png</iconset>
              </property>
             </widget>
            </item>
@@ -183,14 +166,6 @@
    </property>
   </action>
  </widget>
- <customwidgets>
-  <customwidget>
-   <class>FileSelector</class>
-   <extends>QWidget</extends>
-   <header>widgets/fileselector.hpp</header>
-   <container>1</container>
-  </customwidget>
- </customwidgets>
  <resources>
   <include location="file-uploader.qrc"/>
  </resources>

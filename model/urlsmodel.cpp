@@ -18,6 +18,7 @@
 #include <fmt/core.h>
 
 #include "../settings.hpp"
+#include "../utils/commonutils.hpp"
 #include "../utils/curlutils.hpp"
 #include "../utils/imageban.hpp"
 #include "../utils/webpdecoder.hpp"
@@ -74,28 +75,6 @@ UrlsModel::UrlsModel(QObject *parent) :
 }
 
 //-----------------------------------------------------------------------------
-bool UrlsModel::downloadImages(const QString &dir) {
-    QDir workDir{dir};
-
-    bool isExist = workDir.exists();
-    bool isEmpty = workDir.entryList(QDir::NoDotAndDotDot | QDir::Files).isEmpty();
-    if(!isExist || !isEmpty) {
-        return false;
-    }
-
-    m_workDir = std::move(workDir);
-    bool isOk = m_workDir.mkdir(THUMBS_DIR);
-    if(!isOk) {
-        return false;
-    }
-
-    m_thumbsDir = m_workDir;
-    m_thumbsDir.cd(THUMBS_DIR);
-
-    return startDownload();
-}
-
-//-----------------------------------------------------------------------------
 bool UrlsModel::openUrlsFile(const QString &filename) {
     QFile urlsFile(filename);
     if (!urlsFile.open(QIODevice::ReadOnly | QIODevice::Text))
@@ -144,15 +123,16 @@ bool UrlsModel::saveUrlsFile(const QString &filename) {
 }
 
 //-----------------------------------------------------------------------------
-bool UrlsModel::uploadImages(const QString &albumId, const QString &thumbId) {
-    auto isOkWorkDir = checkFiles(m_workDir);
-    auto isOkThumbDir = checkFiles(m_thumbsDir);
-
-    if(!isOkWorkDir || !isOkThumbDir) {
-        return false;
+bool UrlsModel::uploadImages(params::UploadParams params) {
+    if(params.isSave) {
+        bool isOk = utils::checkDir(params.dirPath.c_str());
+        if(!isOk) {
+            return false;
+        }
     }
 
-    return startUpload(albumId, thumbId);
+    //return startUpload(albumId, thumbId);
+    return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -313,37 +293,37 @@ std::string UrlsModel::createBbCodeAsText(std::string link) {
 
 //-----------------------------------------------------------------------------
 void UrlsModel::downloadTask(model::iterator begin, model::iterator end) {
-    curl::CurlDownloader downloader;
-    Settings settings;
+//    curl::CurlDownloader downloader;
+//    Settings settings;
 
-    try {
-        while(begin != end) {
-            auto item = *begin;
-            QString filename = m_workDir.filePath(item.filename.c_str());
+//    try {
+//        while(begin != end) {
+//            auto item = *begin;
+//            QString filename = m_workDir.filePath(item.filename.c_str());
 
-            downloader.download(item.downLink);
-            item.status = model::ItemStatus::DownloadedStatus;
+//            downloader.download(item.downLink);
+//            item.status = model::ItemStatus::DownloadedStatus;
 
-            if(isWebpImage(item.filename)) {
-                WebpDecoder decoder(
-                    reinterpret_cast<const uint8_t*>(downloader.data()), downloader.size()
-                );
-                decoder.save(replaceExt(filename.toStdString(), "png"));
-                item.filename = replaceExt(item.filename, "png");
-            } else {
-                downloader.save(filename.toStdString());
-            }
+//            if(isWebpImage(item.filename)) {
+//                WebpDecoder decoder(
+//                    reinterpret_cast<const uint8_t*>(downloader.data()), downloader.size()
+//                );
+//                decoder.save(replaceExt(filename.toStdString(), "png"));
+//                item.filename = replaceExt(item.filename, "png");
+//            } else {
+//                downloader.save(filename.toStdString());
+//            }
 
-            makeThumb(filename.toStdString(), settings.imageSize());
+//            makeThumb(filename.toStdString(), settings.imageSize());
 
-            emit itemComplete(begin, item);
-            std::advance(begin, 1);
-        }
-    } catch(curl::curl_error &e) {
-        m_logger->error(e.what());
-    }
+//            emit itemComplete(begin, item);
+//            std::advance(begin, 1);
+//        }
+//    } catch(curl::curl_error &e) {
+//        m_logger->error(e.what());
+//    }
 
-    emit taskComplete(model::ProcessType::DownloadProcess);
+//    emit taskComplete(model::ProcessType::DownloadProcess);
 
 }
 
@@ -453,28 +433,28 @@ bool UrlsModel::startUpload(const QString &albumId, const QString &thumbId) {
 void UrlsModel::uploadTask(
     const QString &album, const QString &thumbAlbum,
     model::iterator begin, model::iterator end) {
-    Settings settings;
-    imageban::ImageBan imageBan{settings.secrets().at(0).key};
+//    Settings settings;
+//    imageban::ImageBan imageBan{settings.secrets().at(0).key};
 
-    try {
-        while(begin != end) {
-            auto item = *begin;
-            QString filename = m_workDir.filePath(item.filename.c_str());
-            QString thumbfile = m_thumbsDir.filePath(item.filename.c_str());
+//    try {
+//        while(begin != end) {
+//            auto item = *begin;
+//            QString filename = m_workDir.filePath(item.filename.c_str());
+//            QString thumbfile = m_thumbsDir.filePath(item.filename.c_str());
 
-            auto image = imageBan.uploadImage(album.toStdString(), filename.toStdString());
+//            auto image = imageBan.uploadImage(album.toStdString(), filename.toStdString());
 
-            item.status = model::ItemStatus::UploadedStatus;
-            item.upLink = image.link;
+//            item.status = model::ItemStatus::UploadedStatus;
+//            item.upLink = image.link;
 
-            emit itemComplete(begin, item);
-            std::advance(begin, 1);
-        }
-    } catch(imageban::imageban_error &e) {
-        m_logger->error(e.what());
-    }
+//            emit itemComplete(begin, item);
+//            std::advance(begin, 1);
+//        }
+//    } catch(imageban::imageban_error &e) {
+//        m_logger->error(e.what());
+//    }
 
-    emit taskComplete(model::ProcessType::UploadProcess);
+//    emit taskComplete(model::ProcessType::UploadProcess);
 }
 
 //-----------------------------------------------------------------------------
