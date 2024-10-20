@@ -87,13 +87,6 @@ void MainWindow::doWork() {
     if(!isUploaded) {
         m_logger->error("Ошибка при запуске выгрузки файлов");
     }
-
-    /*
-    bool res = m_urlsModel->downloadImages(ui->dirSelector->filename());
-    if(!res) {
-        m_logger->error("Ошибка при запуске загрузки файлов");
-    }
-    */
 }
 
 //-----------------------------------------------------------------------------
