@@ -12,7 +12,6 @@ UploadImagesDlg::UploadImagesDlg(QWidget *parent) :
     ui(new Ui::UploadImagesDlg),
     m_logger{common::LoggerFactory::instance()} {
     ui->setupUi(this);
-    ui->dirSelector->setMode(FileSelector::OpenDir);
 
     auto albumSlot = [this](int index) {
         albumsSelected(
@@ -41,9 +40,6 @@ UploadImagesDlg::UploadImagesDlg(QWidget *parent) :
     connect(ui->reloadAlbumsBtn, &QToolButton::clicked, [this]() {
         fillAlbumsBox();
     });
-    connect(ui->saveImageBheck, &QCheckBox::toggled, [this](bool checked) {
-        ui->dirSelector->setEnabled(checked);
-    });
 
     albumSlot(ui->albumsBox->currentIndex());
 }
@@ -62,8 +58,8 @@ params::UploadParams UploadImagesDlg::uploadParams() {
             .id = ui->albumsBox->currentData().toString().toStdString(),
             .name = ui->albumsBox->currentText().toStdString()
         },
-        .isSave = ui->saveImageBheck->isChecked(),
-        .dirPath = ui->dirSelector->filename().toStdString()
+        .isSave = false,
+        .dirPath = ""
     };
 
     return params;
