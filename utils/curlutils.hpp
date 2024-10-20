@@ -60,6 +60,17 @@ public:
         curl_mime_filedata(part, filename.c_str());
     }
 
+    void addFile(
+        const std::string &name,
+        const std::string &filename,
+        const std::vector<char> &data
+    ) {
+        auto part = curl_mime_addpart(m_mime.get());
+        curl_mime_name(part, name.c_str());
+        curl_mime_data(part, data.data(), data.size());
+        curl_mime_filename(part, filename.c_str());
+    }
+
     curl_mime* get() {
         return m_mime.get();
     }

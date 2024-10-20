@@ -55,8 +55,9 @@ UploadImagesDlg::~UploadImagesDlg() {
 
 //-----------------------------------------------------------------------------
 params::UploadParams UploadImagesDlg::uploadParams() {
+    auto secret = ui->imagebanBox->currentData().toString().toStdString();
     params::UploadParams params = {
-        .secretKey = ui->albumsBox->currentData().toString().toStdString(),
+        .secretKey = ui->imagebanBox->currentData().toString().toStdString(),
         .album = {
             .id = ui->albumsBox->currentData().toString().toStdString(),
             .name = ui->albumsBox->currentText().toStdString()

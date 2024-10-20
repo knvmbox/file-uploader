@@ -35,7 +35,6 @@ struct Item {
     std::string filename;
     std::string downLink;
     std::string upLink;
-    std::string thumbLink;
     std::string bbcode;
     ItemStatus status;
 };
@@ -60,11 +59,6 @@ public:
     bool uploadImages(params::UploadParams);
 
 public:
-    bool canUpload() {
-        return std::all_of(m_items.begin(), m_items.end(), [](const auto &item){
-            return (item.status != model::ItemStatus::NullStatus);
-        });
-    }
     int rowCount(const QModelIndex &parent = QModelIndex()) const override {
         return static_cast<int>(m_items.size());
     }
@@ -89,17 +83,8 @@ private:
     }
 
 private:
-    bool checkFiles(const QDir&);
-    std::string createBbCode(std::string, std::string);
-    std::string createBbCodeAsText(std::string);
-    void downloadTask(model::iterator, model::iterator);
-    bool isWebpImage(const std::string &filename);
-    bool makeThumb(const std::string &, size_t);
-    std::string makeThumbFilename(const std::string&, const std::string &thrumbDir);
-    std::string replaceExt(const std::string &filename, const std::string &ext);
-    bool startDownload();
-    bool startUpload(const QString &albumId, const QString &thumbId);
-    void uploadTask(const QString&, const QString&, model::iterator, model::iterator);
+    std::vector<char> resizeImage(const void *data, size_t dataSize, size_t newSize);
+    void uploadTask(int id, params::UploadParams params, model::iterator, model::iterator);
 
     std::string uniqueFilename(const std::unordered_set<std::string>&, const std::string&);
 

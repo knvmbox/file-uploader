@@ -3,9 +3,11 @@
 
 #include <QDebug>
 
+#include <QBuffer>
 #include <QColor>
 #include <QIcon>
 #include <QImage>
+#include <QImageReader>
 #include <QProcess>
 #include <QRunnable>
 #include <QTextStream>
@@ -15,7 +17,6 @@
 
 #include <common/logger/loggerfactory.hpp>
 #include <common/logger/loggerutils.hpp>
-#include <fmt/core.h>
 
 #include "../settings.hpp"
 #include "../utils/commonutils.hpp"
@@ -99,7 +100,7 @@ bool UrlsModel::openUrlsFile(const QString &filename) {
         }
 
         m_items.push_back(
-            {filename, line.toStdString(), "", "", "", model::ItemStatus::NullStatus}
+            {filename, line.toStdString(), "", "", model::ItemStatus::NullStatus}
         );
         filenamesSet.insert(filename);
     }
@@ -131,8 +132,33 @@ bool UrlsModel::uploadImages(params::UploadParams params) {
         }
     }
 
-    //return startUpload(albumId, thumbId);
-    return false;
+    auto pool = QThreadPool::globalInstance();
+
+    m_completedTasks = 0;
+
+    if((m_items.size() < m_maxThreads) || (m_maxThreads == 1)) {
+        m_maxThreads = 1;
+        pool->start(new PoolJob([this, params](){
+            uploadTask(1, std::move(params), m_items.begin(), m_items.end());
+        }));
+    } else {
+        m_maxThreads = static_cast<size_t>(QThread::idealThreadCount());
+        size_t count = m_items.size()/m_maxThreads;
+
+        auto cur = m_items.begin();
+        for(int ii = 0; ii < (m_maxThreads - 1); ++ii) {
+            pool->start(new PoolJob([this, params, cur, count, ii]() {
+                uploadTask(ii + 1, std::move(params), cur, std::next(cur, count));
+            }));
+            std::advance(cur, count);
+        }
+        pool->start(new PoolJob([this, params, cur](){
+            uploadTask(m_maxThreads + 5, std::move(params), cur, m_items.end());
+        }));
+    }
+
+    emit processStart(model::ProcessType::UploadProcess);
+    return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -174,8 +200,7 @@ void UrlsModel::updateItemStatus(model::iterator it, model::Item item) {
 
     it->filename = std::move(item.filename);
     it->upLink = item.upLink;
-    it->thumbLink = item.thumbLink;
-    it->bbcode = createBbCodeAsText(std::move(item.thumbLink));
+    it->bbcode = utils::createBbCode(item.upLink);
     it->status = item.status;
 
     emit dataChanged(index(row, 0), index(row, columnCount({})));
@@ -205,256 +230,85 @@ void UrlsModel::updateTaskStatus(model::ProcessType type) {
 }
 
 //-----------------------------------------------------------------------------
-bool UrlsModel::checkFiles(const QDir &dir) {
-    bool isDirExist = dir.exists();
-    auto files = dir.entryList(QDir::NoDotAndDotDot | QDir::Files);
-    bool existFiles = std::all_of(
-        m_items.begin(), m_items.end(), [&files](const model::Item &file) {
-            return files.contains(file.filename.c_str());
-    });
+std::vector<char> UrlsModel::resizeImage(
+    const void *data, size_t dataSize, size_t newSize
+) {
+    QByteArray array = QByteArray::fromRawData(static_cast<const char*>(data), dataSize);
+    QBuffer imgBuffer{&array};
+    QImageReader imgReader{&imgBuffer};
+    QByteArray format = imgReader.format();
+    std::string imgFormat{format.data()};
+    QImage image = imgReader.read();
 
-    return (isDirExist && !files.isEmpty() && existFiles);
-}
-
-//-----------------------------------------------------------------------------
-std::string UrlsModel::createBbCode(std::string link, std::string thumb) {
-    constexpr const char* IMAGEBAN_URL = "imageban.ru";
-    constexpr const char * const OUT_WORD = "out";
-    constexpr const char * const THUMBS_WORD = "thumbs";
-    constexpr size_t YEAR_COUNT = 4;
-    constexpr size_t MONTH_COUNT = 2;
-
-
-    std::string url{link};
-
-    if(link.empty()) {
-        return link;
-    }
-
-    auto pos = url.find(IMAGEBAN_URL);
-    if(pos == std::string::npos) {
-        throw std::out_of_range("Can't find 'imageban.ru' URL!");
-    }
-    url.erase(8, pos - 8);
-
-    pos = url.find(OUT_WORD);
-    if(pos == std::string::npos) {
-        throw std::out_of_range("Can't find 'out' word!");
-    }
-    url.erase(pos, std::strlen(OUT_WORD));
-    url.insert(pos, "show");
-
-    pos = url.find_last_of(".");
-    if(pos == std::string::npos) {
-        throw std::out_of_range("Can't find extension dot!");
-    }
-    url.erase(pos, 1);
-    url.insert(pos, "/");
-
-    pos = link.find(OUT_WORD);
-    if(pos == std::string::npos) {
-        throw std::out_of_range("Can't find 'out' word!");
-    }
-    link.erase(pos, std::strlen(OUT_WORD));
-    link.insert(pos, THUMBS_WORD);
-
-    pos = link.find(THUMBS_WORD);
-    if(pos == std::string::npos) {
-        throw std::out_of_range("Can't find 'thumbs' word!");
-    }
-
-    pos += std::strlen(THUMBS_WORD) + 1 + YEAR_COUNT;
-    if(pos >= link.size()) {
-        throw std::out_of_range("Can't find year digits!");
-    }
-    link.erase(pos, 1);
-    link.insert(pos, ".");
-
-    pos += 1 + MONTH_COUNT;
-    if(pos >= link.size()) {
-        throw std::out_of_range("Can't find month digits!");
-    }
-    link.erase(pos, 1);
-    link.insert(pos, ".");
-
-    return fmt::format("[URL={0}][IMG]{1}[/IMG][/URL]", url, thumb);
-}
-
-//-----------------------------------------------------------------------------
-std::string UrlsModel::createBbCodeAsText(std::string link) {
-    if(link.empty()) {
+    if(image.isNull()) {
         return {};
     }
 
-    return fmt::format(
-        "[URL=https://imageban.ru][IMG]{}[/IMG][/URL]", link
-    );
-}
-
-//-----------------------------------------------------------------------------
-void UrlsModel::downloadTask(model::iterator begin, model::iterator end) {
-//    curl::CurlDownloader downloader;
-//    Settings settings;
-
-//    try {
-//        while(begin != end) {
-//            auto item = *begin;
-//            QString filename = m_workDir.filePath(item.filename.c_str());
-
-//            downloader.download(item.downLink);
-//            item.status = model::ItemStatus::DownloadedStatus;
-
-//            if(isWebpImage(item.filename)) {
-//                WebpDecoder decoder(
-//                    reinterpret_cast<const uint8_t*>(downloader.data()), downloader.size()
-//                );
-//                decoder.save(replaceExt(filename.toStdString(), "png"));
-//                item.filename = replaceExt(item.filename, "png");
-//            } else {
-//                downloader.save(filename.toStdString());
-//            }
-
-//            makeThumb(filename.toStdString(), settings.imageSize());
-
-//            emit itemComplete(begin, item);
-//            std::advance(begin, 1);
-//        }
-//    } catch(curl::curl_error &e) {
-//        m_logger->error(e.what());
-//    }
-
-//    emit taskComplete(model::ProcessType::DownloadProcess);
-
-}
-
-//-----------------------------------------------------------------------------
-bool UrlsModel::isWebpImage(const std::string &filename) {
-    std::filesystem::path path{filename};
-
-    std::string stem = path.extension();
-    std::transform(stem.begin(), stem.end(), stem.begin(), ::toupper);
-
-    return (stem == ".WEBP");
-}
-
-//-----------------------------------------------------------------------------
-bool UrlsModel::makeThumb(const std::string &item, size_t size_) {
-    QImage image{item.c_str()};
-
-    int size = static_cast<int>(size_);
+    int size = static_cast<int>(newSize);
     int width = image.width();
 
-    if(width < size) {
-        QFile file{item.c_str()};
-        return file.copy(makeThumbFilename(item, THUMBS_DIR).c_str());
+    QImage scaledImage = (width > size) ? image.scaledToWidth(size) : std::move(image);
+
+    QByteArray ba;
+    QBuffer buffer(&ba);
+    buffer.open(QIODevice::WriteOnly);
+    bool isOk = scaledImage.save(&buffer, imgFormat.c_str());
+    if(!isOk) {
+        return {};
     }
 
-    QImage thrumbImage;
-    thrumbImage = image.scaledToWidth(size);
+    std::vector<char> v(ba.size());
+    memcpy(v.data(), ba.data(), ba.size());
 
-    thrumbImage.save(makeThumbFilename(item, THUMBS_DIR).c_str());
-
-    return true;
-}
-
-//-----------------------------------------------------------------------------
-std::string UrlsModel::makeThumbFilename(
-    const std::string &filename,
-    const std::string &thumbDir
-) {
-    std::filesystem::path path = filename;
-    return {path.parent_path()/thumbDir/path.filename()};
-}
-
-//-----------------------------------------------------------------------------
-std::string UrlsModel::replaceExt(const std::string &filename, const std::string &ext) {
-    std::filesystem::path path{filename};
-    path.replace_extension("." + ext);
-    return path;
-}
-
-//-----------------------------------------------------------------------------
-bool UrlsModel::startDownload() {
-    auto pool = QThreadPool::globalInstance();
-
-    m_completedTasks = 0;
-
-    if((m_items.size() < m_maxThreads) || (m_maxThreads == 1)) {
-        pool->start(new PoolJob([this](){
-            downloadTask(m_items.begin(), m_items.end());
-        }));
-    } else {
-        size_t count = m_items.size()/m_maxThreads;
-        model::iterator cur = m_items.begin();
-        for(int ii = 0; ii < (m_maxThreads - 1); ++ii) {
-            pool->start(new PoolJob([this, cur, count]() {
-                downloadTask(cur, std::next(cur, count));
-            }));
-            std::advance(cur, count);
-        }
-        pool->start(new PoolJob([this, cur](){
-            downloadTask(cur, m_items.end());
-        }));
-    }
-
-    emit processStart(model::ProcessType::DownloadProcess);
-    return true;
-}
-
-//-----------------------------------------------------------------------------
-bool UrlsModel::startUpload(const QString &albumId, const QString &thumbId) {
-    auto pool = QThreadPool::globalInstance();
-
-    m_completedTasks = 0;
-
-    if((m_items.size() < m_maxThreads) || (m_maxThreads == 1)) {
-        pool->start(new PoolJob([this, albumId, thumbId](){
-            uploadTask(albumId, thumbId, m_items.begin(), m_items.end());
-        }));
-    } else {
-        size_t count = m_items.size()/m_maxThreads;
-        auto cur = m_items.begin();
-        for(int ii = 0; ii < (m_maxThreads - 1); ++ii) {
-            pool->start(new PoolJob([this, albumId, thumbId, cur, count]() {
-                uploadTask(albumId, thumbId, cur, std::next(cur, count));
-            }));
-            std::advance(cur, count);
-        }
-        pool->start(new PoolJob([this, albumId, thumbId, cur](){
-            uploadTask(albumId, thumbId, cur, m_items.end());
-        }));
-    }
-
-    emit processStart(model::ProcessType::UploadProcess);
-    return true;
+    return v;
 }
 
 //-----------------------------------------------------------------------------
 void UrlsModel::uploadTask(
-    const QString &album, const QString &thumbAlbum,
-    model::iterator begin, model::iterator end) {
-//    Settings settings;
-//    imageban::ImageBan imageBan{settings.secrets().at(0).key};
+    int id, params::UploadParams params, model::iterator begin, model::iterator end
+) {
+    Settings settings;
+    curl::CurlDownloader downloader;
+    imageban::ImageBan imageBan{std::move(params.secretKey)};
 
-//    try {
-//        while(begin != end) {
-//            auto item = *begin;
-//            QString filename = m_workDir.filePath(item.filename.c_str());
-//            QString thumbfile = m_thumbsDir.filePath(item.filename.c_str());
+    QDir workDir = params.isSave ? QDir{params.dirPath.c_str()} : QDir::temp();
 
-//            auto image = imageBan.uploadImage(album.toStdString(), filename.toStdString());
+    try {
+        while(begin != end) {
+            auto item = *begin;
 
-//            item.status = model::ItemStatus::UploadedStatus;
-//            item.upLink = image.link;
+            downloader.download(item.downLink);
+            item.status = model::ItemStatus::DownloadedStatus;
+            QString filename = workDir.filePath(item.filename.c_str());
 
-//            emit itemComplete(begin, item);
-//            std::advance(begin, 1);
-//        }
-//    } catch(imageban::imageban_error &e) {
-//        m_logger->error(e.what());
-//    }
+            if(utils::isWebpImage(item.filename)) {
+                WebpDecoder decoder(
+                    reinterpret_cast<const uint8_t*>(downloader.data()), downloader.size()
+                );
+                filename = QString::fromStdString(utils::replaceExt(filename.toStdString(), "png"));
+                item.filename = utils::replaceExt(item.filename, "png");
 
-//    emit taskComplete(model::ProcessType::UploadProcess);
+                decoder.save(filename.toStdString());
+            }
+
+            auto data = resizeImage(downloader.data(), downloader.size(), settings.imageSize());
+            if(data.size()) {
+                auto image = imageBan.uploadImage(
+                    params.album.id, item.filename, std::move(data)
+                );
+
+                item.status = model::ItemStatus::UploadedStatus;
+                item.upLink = image.link;
+            }
+
+            emit itemComplete(begin, item);
+            std::advance(begin, 1);
+        }
+    } catch(curl::curl_error &e) {
+        m_logger->error(e.what());
+    }
+
+    emit taskComplete(model::ProcessType::UploadProcess);
 }
 
 //-----------------------------------------------------------------------------

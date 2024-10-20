@@ -76,11 +76,13 @@ public:
         return album;
     }
 
-    image_t uploadImage(const std::string &album, const std::string &filepath) {
+    image_t uploadImage(
+        const std::string &album, const std::string &filepath, std::vector<char> data
+    ) {
         curl::CurlDownloader request;
 
         curl::CurlMime mime{request.get()};
-        mime.addFile("image", filepath);
+        mime.addFile("image", filepath, data);
         mime.addPart("album", album);
 
         addSecret(request);
