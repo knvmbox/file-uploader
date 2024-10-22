@@ -131,26 +131,24 @@ bool UrlsModel::uploadImages(params::UploadParams params) {
 
     auto pool = QThreadPool::globalInstance();
 
-    m_completedTasks = 0;
-
     if((m_items.size() < m_maxThreads) || (m_maxThreads == 1)) {
-        m_maxThreads = 1;
+        m_startedTasks = 1;
         pool->start(new PoolJob([this, params](){
-            uploadTask(1, std::move(params), m_items.begin(), m_items.end());
+            uploadTask(std::move(params), m_items.begin(), m_items.end());
         }));
     } else {
-        m_maxThreads = static_cast<size_t>(QThread::idealThreadCount());
+        m_startedTasks = m_maxThreads;
         size_t count = m_items.size()/m_maxThreads;
 
         auto cur = m_items.begin();
         for(int ii = 0; ii < (m_maxThreads - 1); ++ii) {
             pool->start(new PoolJob([this, params, cur, count, ii]() {
-                uploadTask(ii + 1, std::move(params), cur, std::next(cur, count));
+                uploadTask(std::move(params), cur, std::next(cur, count));
             }));
             std::advance(cur, count);
         }
         pool->start(new PoolJob([this, params, cur](){
-            uploadTask(m_maxThreads + 5, std::move(params), cur, m_items.end());
+            uploadTask(std::move(params), cur, m_items.end());
         }));
     }
 
@@ -259,7 +257,7 @@ std::vector<char> UrlsModel::resizeImage(
 
 //-----------------------------------------------------------------------------
 void UrlsModel::uploadTask(
-    int id, params::UploadParams params, model::iterator begin, model::iterator end
+    params::UploadParams params, model::iterator begin, model::iterator end
 ) {
     Settings settings;
     curl::CurlDownloader downloader;

@@ -84,7 +84,7 @@ private:
 
 private:
     std::vector<char> resizeImage(const void *data, size_t dataSize, size_t newSize);
-    void uploadTask(int id, params::UploadParams params, model::iterator, model::iterator);
+    void uploadTask(params::UploadParams params, model::iterator, model::iterator);
 
     std::string uniqueFilename(const std::unordered_set<std::string>&, const std::string&);
 
