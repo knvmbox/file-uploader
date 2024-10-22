@@ -271,24 +271,20 @@ void UrlsModel::uploadTask(
     curl::CurlDownloader downloader;
     imageban::ImageBan imageBan{std::move(params.secretKey)};
 
-    QDir workDir = params.isSave ? QDir{params.dirPath.c_str()} : QDir::temp();
-
     try {
         while(begin != end) {
             auto item = *begin;
 
             downloader.download(item.downLink);
             item.status = model::ItemStatus::DownloadedStatus;
-            QString filename = workDir.filePath(item.filename.c_str());
 
             if(utils::isWebpImage(item.filename)) {
                 WebpDecoder decoder(
                     reinterpret_cast<const uint8_t*>(downloader.data()), downloader.size()
                 );
-                filename = QString::fromStdString(utils::replaceExt(filename.toStdString(), "png"));
                 item.filename = utils::replaceExt(item.filename, "png");
 
-                decoder.save(filename.toStdString());
+                //decoder.decode();
             }
 
             auto data = resizeImage(downloader.data(), downloader.size(), settings.imageSize());
