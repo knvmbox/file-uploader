@@ -32,9 +32,6 @@ static constexpr int filenameRow = 1;
 static constexpr int downUrlRow = 2;
 static constexpr int upUrlRow = 3;
 
-static const char* THUMBS_DIR = "thumbs";
-
-
 ///////////////////////////////////////////////////////////////////////////////
 template <typename F>
 struct PoolJob : public QRunnable {
