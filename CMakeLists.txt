@@ -50,6 +50,7 @@ set(PROJECT_HEADERS
     utils/commonutils.hpp
     utils/curlutils.hpp
     utils/imageban.hpp
+    utils/pngutils.hpp
     utils/webpdecoder.hpp
     widgets/fileselector.hpp
 )

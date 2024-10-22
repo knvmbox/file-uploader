@@ -278,16 +278,21 @@ void UrlsModel::uploadTask(
             downloader.download(item.downLink);
             item.status = model::ItemStatus::DownloadedStatus;
 
-            if(utils::isWebpImage(item.filename)) {
+            std::vector<char> data;
+            bool isWebP = utils::isWebpImage(item.filename);
+            if(isWebP) {
                 WebpDecoder decoder(
                     reinterpret_cast<const uint8_t*>(downloader.data()), downloader.size()
                 );
                 item.filename = utils::replaceExt(item.filename, "png");
 
-                //decoder.decode();
+                auto pngData = decoder.decode();
+                data = resizeImage(pngData.data(), pngData.size(), settings.imageSize());
+
+            } else {
+                data = resizeImage(downloader.data(), downloader.size(), settings.imageSize());
             }
 
-            auto data = resizeImage(downloader.data(), downloader.size(), settings.imageSize());
             if(data.size()) {
                 auto image = imageBan.uploadImage(
                     params.album.id, item.filename, std::move(data)

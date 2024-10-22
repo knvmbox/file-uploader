@@ -10,6 +10,8 @@
 #include <imageio/image_enc.h>
 #include <imageio/webpdec.h>
 
+#include "pngutils.hpp"
+
 
 ///////////////////////////////////////////////////////////////////////////////
 struct webp_error : public std::runtime_error {
@@ -69,6 +71,10 @@ public:
         if(!ok) {
             throw webp_error("can't create file!");
         }
+    }
+
+    std::vector<uint8_t> decode() {
+        return png::decodeToMemory(m_outBuffer.get());
     }
 
 private:
