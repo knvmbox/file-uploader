@@ -96,9 +96,7 @@ bool UrlsModel::openUrlsFile(const QString &filename) {
             filename = uniqueFilename(filenamesSet, filename);
         }
 
-        m_items.push_back(
-            {filename, line.toStdString(), "", "", model::ItemStatus::NullStatus}
-        );
+        m_items.push_back({filename, line.toStdString(), ""});
         filenamesSet.insert(filename);
     }
     endResetModel();
@@ -165,13 +163,11 @@ QVariant UrlsModel::decorationData(const QModelIndex &index) const {
         return QVariant{};
     }
 
-    switch(m_items[index.row()].status) {
-    case model::ItemStatus::NullStatus: return m_grayIcon;
-    case model::ItemStatus::DownloadedStatus: return m_downIcon;
-    case model::ItemStatus::UploadedStatus: return m_upDownIcon;
+    if(m_items[index.row()].bbcode.empty()) {
+        return m_grayIcon;
+    } else {
+        return m_upDownIcon;
     }
-
-    return QVariant{};
 }
 
 //-----------------------------------------------------------------------------
@@ -194,9 +190,7 @@ void UrlsModel::updateItemStatus(model::iterator it, model::Item item) {
     int row = std::distance(m_items.begin(), it);
 
     it->filename = std::move(item.filename);
-    it->upLink = item.upLink;
-    it->bbcode = utils::createBbCode(item.upLink);
-    it->status = item.status;
+    it->bbcode = std::move(item.bbcode);
 
     emit dataChanged(index(row, 0), index(row, columnCount({})));
 }
@@ -206,19 +200,21 @@ void UrlsModel::updateTaskStatus(model::ProcessType type) {
     common::log::info(m_logger, "Завершена задача из", m_startedTasks);
 
     if(!--m_startedTasks) {
-        auto status = (
-            (type == model::ProcessType::DownloadProcess)
-            ? model::ItemStatus::DownloadedStatus
-            : model::ItemStatus::UploadedStatus
-        );
-
         emit processComplete(
             type,
-            std::all_of(m_items.begin(), m_items.end(), [status](const auto &item){
-                return (item.status == status);
+            std::all_of(m_items.begin(), m_items.end(), [](const auto &item){
+                return (!item.bbcode.empty());
             })
         );
     }
+}
+
+//-----------------------------------------------------------------------------
+std::vector<uint8_t> UrlsModel::decodeWebP(model::Item &item, const char *data, size_t size) {
+    WebpDecoder decoder(reinterpret_cast<const uint8_t*>(data), size);
+    item.filename = utils::replaceExt(item.filename, "png");
+
+    return decoder.decode();
 }
 
 //-----------------------------------------------------------------------------
@@ -267,24 +263,17 @@ void UrlsModel::uploadTask(
         for(; begin != end; ++begin) {
             auto item = *begin;
 
-            if(!item.upLink.empty()) {
+            if(!item.bbcode.empty()) {
                 continue;
             }
 
             downloader.download(item.downLink);
-            item.status = model::ItemStatus::DownloadedStatus;
 
             std::vector<char> data;
             bool isWebP = utils::isWebpImage(item.filename);
             if(isWebP) {
-                WebpDecoder decoder(
-                    reinterpret_cast<const uint8_t*>(downloader.data()), downloader.size()
-                );
-                item.filename = utils::replaceExt(item.filename, "png");
-
-                auto pngData = decoder.decode();
+                auto pngData = decodeWebP(item, downloader.data(), downloader.size());
                 data = resizeImage(pngData.data(), pngData.size(), settings.imageSize());
-
             } else {
                 data = resizeImage(downloader.data(), downloader.size(), settings.imageSize());
             }
@@ -294,8 +283,7 @@ void UrlsModel::uploadTask(
                     params.album.id, item.filename, std::move(data)
                 );
 
-                item.status = model::ItemStatus::UploadedStatus;
-                item.upLink = image.link;
+                item.bbcode = utils::createBbCode(image.link);
             }
 
             emit itemComplete(begin, item);

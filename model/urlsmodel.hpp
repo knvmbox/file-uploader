@@ -22,10 +22,6 @@
 namespace model {
 
 ///////////////////////////////////////////////////////////////////////////////
-enum class ItemStatus {
-    NullStatus, DownloadedStatus, UploadedStatus
-};
-
 enum class ProcessType {
     DownloadProcess, UploadProcess
 };
@@ -34,9 +30,7 @@ enum class ProcessType {
 struct Item {
     std::string filename;
     std::string downLink;
-    std::string upLink;
     std::string bbcode;
-    ItemStatus status;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -83,9 +77,9 @@ private:
     }
 
 private:
+    std::vector<uint8_t> decodeWebP(model::Item &item, const char *data, size_t size);
     std::vector<char> resizeImage(const void *data, size_t dataSize, size_t newSize);
     void uploadTask(params::UploadParams params, model::iterator, model::iterator);
-
     std::string uniqueFilename(const std::unordered_set<std::string>&, const std::string&);
 
 private:
