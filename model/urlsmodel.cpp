@@ -264,8 +264,12 @@ void UrlsModel::uploadTask(
     imageban::ImageBan imageBan{std::move(params.secretKey)};
 
     try {
-        while(begin != end) {
+        for(; begin != end; ++begin) {
             auto item = *begin;
+
+            if(!item.upLink.empty()) {
+                continue;
+            }
 
             downloader.download(item.downLink);
             item.status = model::ItemStatus::DownloadedStatus;
@@ -295,7 +299,6 @@ void UrlsModel::uploadTask(
             }
 
             emit itemComplete(begin, item);
-            std::advance(begin, 1);
         }
     } catch(curl::curl_error &e) {
         m_logger->error(e.what());
