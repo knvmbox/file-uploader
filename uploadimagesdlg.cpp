@@ -27,11 +27,6 @@ UploadImagesDlg::UploadImagesDlg(QWidget *parent) :
         showNewAlbumsWidgets(false);
     };
 
-    Settings settings;
-    auto secrets = settings.secrets();
-    fillImagbanBox(secrets);
-    imagebanSlot(0);
-
     connect(ui->imagebanBox, QOverload<int>::of(&QComboBox::currentIndexChanged), imagebanSlot);
     connect(ui->albumsBox, QOverload<int>::of(&QComboBox::currentIndexChanged), albumSlot);
     connect(ui->addAlbumBtn, &QToolButton::clicked, [this]() {
@@ -40,6 +35,10 @@ UploadImagesDlg::UploadImagesDlg(QWidget *parent) :
     connect(ui->reloadAlbumsBtn, &QToolButton::clicked, [this]() {
         fillAlbumsBox();
     });
+
+    Settings settings;
+    fillImagbanBox(settings.secrets());
+    imagebanSlot(0);
 
     albumSlot(ui->albumsBox->currentIndex());
 }
@@ -93,13 +92,17 @@ void UploadImagesDlg::createImageban(std::string secretKey) {
 //-----------------------------------------------------------------------------
 void UploadImagesDlg::fillAlbumsBox() {
     ui->albumsBox->clear();
-    auto list = m_imgImageBan->albumsList();
 
-    for(const auto &item : list) {
-        ui->albumsBox->addItem(item.name.c_str(), item.id.c_str());
+    try {
+        auto list = m_imgImageBan->albumsList();
+        for(const auto &item : list) {
+            ui->albumsBox->addItem(item.name.c_str(), item.id.c_str());
+        }
+        ui->albumsBox->addItem("Другой", QStringList{});
+    } catch(std::runtime_error &e) {
+        m_logger->error(e.what());
     }
 
-    ui->albumsBox->addItem("Другой", QStringList{});
 }
 
 //-----------------------------------------------------------------------------
