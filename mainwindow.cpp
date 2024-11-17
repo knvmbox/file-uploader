@@ -1,4 +1,5 @@
 #include <QFileDialog>
+#include <QMessageBox>
 
 #include <common/logger/loggerfactory.hpp>
 #include <common/qtwidgets/plaintextlogger.hpp>
@@ -29,6 +30,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->openUrlsAction, SIGNAL(triggered(bool)), this, SLOT(openUrls()));
     connect(ui->exportUrlsAction, SIGNAL(triggered(bool)), this, SLOT(saveUrls()));
     connect(ui->paramsAction, SIGNAL(triggered(bool)), this, SLOT(openParams()));
+    connect(ui->aboutAction, SIGNAL(triggered(bool)), this, SLOT(aboutProgramm()));
 
     connect(ui->doWorkBtn, SIGNAL(clicked(bool)), this, SLOT(doWork()));
 
@@ -67,6 +69,15 @@ void MainWindow::processCompleted(model::ProcessType type, bool status) {
     }
 
     lockUi(false);
+}
+
+//-----------------------------------------------------------------------------
+void MainWindow::aboutProgramm() {
+    QMessageBox::about(
+        ui->centralwidget,
+        this->windowTitle(),
+        "Программа для выгрузки изображений в ImageBan"
+    );
 }
 
 //-----------------------------------------------------------------------------

@@ -26,6 +26,7 @@ private:
     void lockUi(bool);
 
 private slots:
+    void aboutProgramm();
     void doWork();
     void openParams();
     void openUrls();
