@@ -290,6 +290,10 @@ void UrlsModel::uploadTask(
         }
     } catch(curl::curl_error &e) {
         m_logger->error(e.what());
+    } catch(imageban::imageban_error &e) {
+        m_logger->error(e.what());
+    } catch(...) {
+        m_logger->critical("Unknown critical error!");
     }
 
     emit taskComplete(model::ProcessType::UploadProcess);
